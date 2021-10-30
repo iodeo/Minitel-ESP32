@@ -17,4 +17,4 @@ ESP MINITEL v2 schematic are provided as CC-BY-SA
 * Serial connection to minitel of course
 * And some status LEDs
 
-<br><br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
+<br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
