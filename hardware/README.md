@@ -8,11 +8,12 @@ This schematic is an example of what can be made with cheap ESP32 modules.
 <br><br>Serial transmission is wired to ESP32 module through RX2 & TX2 pins (usually P16 & P17)
 
 ## DEVBOARD VERSION
-Devboard version includes :
+ESP MINITEL v2 schematic are provided as CC-BY-SA
+<br><br>This hardware includes :
 <br> - USB support
 <br> - Auto bootmode selection
 <br> - Integrated buck converter with fuse protection
 <br> - Power management to enable USB and/or minitel plugged at any time
 <br> - Serial connection to minitel of course
 <br> - And some status LEDs
-<br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
+<br><br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
