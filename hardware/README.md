@@ -9,7 +9,7 @@ This schematic is an example of what can be made with cheap ESP32 modules.
 
 ## DEVBOARD VERSION
 ESP MINITEL DEVBOARD v2 schematic is provided.
-<br>This devboard includes :
+<br><br>The devboard includes :
 * USB support
 * Auto bootmode selection
 * Integrated buck converter with fuse protection
