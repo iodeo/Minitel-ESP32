@@ -9,12 +9,15 @@ This schematic is an example of what can be made with cheap ESP32 modules.
 
 ## DEVBOARD VERSION
 ESP MINITEL DEVBOARD v2 schematic is provided.
+
 <br><br>The devboard includes :
-* USB support
+* USB support (USB-C port)
 * Auto bootmode selection
 * Integrated buck converter with fuse protection
 * Power management to enable USB and/or minitel plugged at any time
 * Serial connection to minitel of course
 * And some status LEDs
 
-<br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
+The pcb has same size as esp32 common modules thanks to two sided assembly. 
+<br>It can be fitted with DIN or JST-XH connector.
+<br><br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
