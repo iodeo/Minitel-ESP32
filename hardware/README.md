@@ -15,4 +15,4 @@ Devboard version includes :
 <br> - Power management to enable USB and/or minitel plugged at any time
 <br> - Serial adapter to minitel of course
 <br> - And various status LEDs
-<br>Available on demand at [contact@iodeo.fr](contact@iodeo.fr)
+<br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
