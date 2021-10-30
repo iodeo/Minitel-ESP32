@@ -1,7 +1,6 @@
 ## BREADBOARD VERSION
 This schematic is an example of what can be made with cheap ESP32 modules.
-***
-WARNING : This circuit may not be powered from minitel and usb at the same time.
+<br>WARNING : This circuit may not be powered from minitel and usb at the same time.
 <br><br>The DIN connector may be replaced by home made connector from any DIN5 cable.
 <br><br>Buck converter is only needed where USB power source is not available.
 <br><br>Any buck converter with voltage input range from 6v to 15v with power rating greater than 1 Amps would fit.
@@ -10,7 +9,7 @@ WARNING : This circuit may not be powered from minitel and usb at the same time.
 
 ## DEVBOARD VERSION
 ESP MINITEL v2 schematic are provided as CC-BY-SA
-***This hardware includes :
+<br>This hardware includes :
 * USB support
 * Auto bootmode selection
 * Integrated buck converter with fuse protection
