@@ -7,7 +7,7 @@ This repo aims at gather helpfull sample codes for Minitel apps development usin
 
 ## HARDWARE
 
-Guidance is given to connect any cheap ESP32 modules to the minitel 
+Schematic is provided to connect any cheap ESP32 modules to the minitel 
 <br>A Devboard as shown in this [hackaday project page](https://hackaday.io/project/180473-minitel-reuse-projects-one-board-to-rule-them-all) is also available on demand at this adress [contact@iodeo.fr](contact@iodeo.fr).
 
 
