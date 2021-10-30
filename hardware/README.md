@@ -9,11 +9,11 @@ This schematic is an example of what can be made with cheap ESP32 modules.
 
 ## DEVBOARD VERSION
 ESP MINITEL v2 schematic are provided as CC-BY-SA
-<br><br>This hardware includes :
-<br> - USB support
-<br> - Auto bootmode selection
-<br> - Integrated buck converter with fuse protection
-<br> - Power management to enable USB and/or minitel plugged at any time
-<br> - Serial connection to minitel of course
-<br> - And some status LEDs
+***This hardware includes :
+* USB support
+* Auto bootmode selection
+* Integrated buck converter with fuse protection
+* Power management to enable USB and/or minitel plugged at any time
+* Serial connection to minitel of course
+* And some status LEDs
 <br><br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
