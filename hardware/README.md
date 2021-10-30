@@ -16,4 +16,5 @@ ESP MINITEL v2 schematic are provided as CC-BY-SA
 * Power management to enable USB and/or minitel plugged at any time
 * Serial connection to minitel of course
 * And some status LEDs
+
 <br><br>Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
