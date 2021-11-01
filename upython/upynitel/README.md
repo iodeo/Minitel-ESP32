@@ -17,4 +17,5 @@ Keeping only usefull parts of incoming data, would solve the problem.
    * upynitel.py, as a local library
 
 This is really basic guidance just to give an idea to people new to micropython.
+
 For complete guidance and tutorials, Please check on the internet ;)
