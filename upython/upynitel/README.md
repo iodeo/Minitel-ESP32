@@ -12,9 +12,9 @@ Keeping only usefull parts of incoming data, would solve the problem.
 1. Put micropython firmware into your ESP32
 2. Connect it to a Python IDE with micropython support (Thonny IDE is a good way to go)
 3. Put the .py files into ESP32 using your IDE:
-  * boot.py, equiv. to Arduino setup()
-  * main.py, equiv. to Arduino loop()
-  * upynitel.py, as a local library
+ * boot.py, equiv. to Arduino setup()
+ * main.py, equiv. to Arduino loop()
+ * upynitel.py, as a local library
 
 This is really basic guidance just to give an idea to people new to micropython.
 For complete guidance and tutorials, Please check on the internet ;)
