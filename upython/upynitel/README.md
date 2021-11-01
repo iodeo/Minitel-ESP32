@@ -1,6 +1,5 @@
 
-This software is a quick adaptation of pynitel library
-https://github.com/cquest/pynitel
+This software is a quick adaptation of [pynitel library] (https://github.com/cquest/pynitel), made by [cquest under AGPL license.
 
 upynitel functions help to handle Minitel screen and keyboard exactly as pynitel does.
 
