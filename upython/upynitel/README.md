@@ -15,6 +15,6 @@ Keeping only usefull parts of incoming data, would solve the problem.
    * main.py, equiv. to Arduino loop()
    * upynitel.py, as a local library
 
-This is really basic guidance just to give an idea to people new to micropython.
+This is just to give an idea for people new to micropython.
 
 For complete guidance and tutorials, Please check on the internet ;)
