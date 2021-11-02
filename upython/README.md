@@ -8,7 +8,7 @@ upynitel functions help to handle Minitel screen and keyboard exactly as pynitel
 
 ## Examples description
 * upynitel/main.py is based on annuaire_exemple.py with fake annuaire request in order to preserve ESP32 memory which is not able to load a full webpage from http request. Keeping only usefull parts of incoming data, would solve the problem.
-* diaporama/main.py is a diaporama application displaying vdt screens from ESP32 flash memory. Screens are from (XReyRobert)[https://github.com/XReyRobert/VideotexPagesRepository/]
+* diaporama/main.py is a diaporama application displaying vdt screens from ESP32 flash memory. Screens are from [XReyRobert](https://github.com/XReyRobert/VideotexPagesRepository/)
 
 ## Quick guidance to micropython on ESP32: 
 1. Put micropython firmware into your ESP32
