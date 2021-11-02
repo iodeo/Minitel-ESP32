@@ -15,6 +15,11 @@ Keeping only usefull parts of incoming data, would solve the problem.
    * main.py, equiv. to Arduino loop()
    * upynitel.py, as a local library
 
+Some developement hints with Thonny:
+CTRL+C Stop running
+CTRL+D Soft reboot
+
+
 This is just to give an idea for people new to micropython.
 
 For complete guidance and tutorials, Please check on the internet ;)
