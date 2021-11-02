@@ -12,7 +12,7 @@ upynitel functions help to handle Minitel screen and keyboard exactly as pynitel
 
 ## Quick guidance to micropython on ESP32: 
 1. Put micropython firmware into your ESP32
-2. Connect it to a Python IDE with micropython support (Thonny IDE is a good way to go)
+2. Connect it to a Python IDE with micropython support, such as Thonny IDE
 3. Put the .py files into ESP32 using your IDE
    * boot.py
    * main.py
