@@ -6,6 +6,11 @@ This repo aims at gather helpfull sample codes for Minitel apps development usin
 
 It is not intended to provide final application for given use case.
 
+Sample codes are given :
+
+* [Arduino IDE](arduino)
+* [MicroPython](upython)
+
 ## [HARDWARE](hardware)
 
 Schematic is provided to connect any cheap ESP32 modules to the minitel. 
