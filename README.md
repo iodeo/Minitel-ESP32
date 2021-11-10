@@ -11,7 +11,7 @@ Sample codes are given :
 * [Arduino IDE](arduino)
 * [MicroPython](upython)
 
-## [HARDWARE](hardware)
+## HARDWARE
 
 Schematic is provided to connect any cheap ESP32 modules to the minitel. 
 
