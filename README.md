@@ -17,8 +17,6 @@ Schematic is provided to connect any cheap ESP32 modules to the minitel.
 
 Schematic for ESP MINITEL DEVBOARD is also provided.
 
-## DEMONSTRATION
-
 The Dev Board is shown in [this video](https://youtu.be/iOB85X8F1vI)
 
 
