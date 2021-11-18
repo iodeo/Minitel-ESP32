@@ -1,3 +1,7 @@
+## How to
+
+Some instructions are given in [hackaday project page](https://hackaday.io/project/180473/instructions)
+
 ## Minitel1B
 
 Where name is starting by "Minitel1B", the following lib must be added:
