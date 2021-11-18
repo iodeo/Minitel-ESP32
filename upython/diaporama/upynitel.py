@@ -3,6 +3,8 @@
 # ré-écritude en python3 de Cristel/Dragster !
 # (C) 1984-2017 Christian Quest / A-GPL
 
+# portage micropython par iodeo en 2021
+
 import time
 
 
