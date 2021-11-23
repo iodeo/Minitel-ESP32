@@ -100,6 +100,8 @@ void setup() {
   debugBegin(115200);
   debugPrint("debug port ready");
   
+  delay(500); // wait minitel to init
+  
   //init minitel at 4800 bauds
   if (minitel.searchSpeed() != 4800) {     // search speed
     if (minitel.changeSpeed(4800) < 0) {   // set to 4800 if different
@@ -135,6 +137,14 @@ void welcome() {
   minitel.moveCursorXY(12,19);
   minitel.attributs(CLIGNOTEMENT);
   minitel.print("APPUYER SUR ENTREE");
+  
+  minitel.attributs(CARACTERE_BLEU);
+  minitel.attributs(GRANDEUR_NORMALE);
+  minitel.attributs(FIXE);
+  minitel.moveCursorXY(1,23);
+  //   40 char   ----------**********----------**********
+  minitel.print("PLAYER 1                        PLAYER 2");
+  minitel.print("UP:Q DOWN:W                  UP:J DOWN:N");
 
   //flush any input
   while(MINITEL_PORT.available()) {
