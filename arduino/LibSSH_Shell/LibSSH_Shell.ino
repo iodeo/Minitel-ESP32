@@ -663,9 +663,9 @@ void controlTask(void *pvParameter)
   {
     printf("%% No formatted SPIFFS filesystem found to mount.\n");
     printf("%% Format SPIFFS and mount now (NB. may cause data loss) [y/n]?\n");
-    while (!Serial.available()) {}
-    char c = Serial.read();
-    if (c == 'y' || c == 'Y')
+    char buf[10];
+    fgets(buf, sizeof(buf), stdin);
+    if ((buf[0]=='Y') || (buf[0]=='y'))
     {
       printf("%% Formatting...\n");
       fsGood = SPIFFS.format();
