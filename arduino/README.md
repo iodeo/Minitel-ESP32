@@ -14,4 +14,7 @@ For LibSSH_Shell, the following lib must be added:
 
 https://github.com/ewpa/LibSSH-ESP32
 
-Minitel needs to be set manually in 4800 bauds (Fnct+P 4) and in teleinformatique standard (Fcnt+T A)
+In current version, Minitel needs to be set manually in 4800 bauds (Fnct+P 4) and in teleinformatique standard (Fcnt+T A) before program starts. 
+Dev board reset button is usefull for this.
+
+Once connected to server, you will also want to disable local Echo (Fnct+T E) beacause echo is provided through ssh already.
