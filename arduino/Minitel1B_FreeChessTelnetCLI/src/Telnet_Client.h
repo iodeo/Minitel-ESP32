@@ -14,6 +14,7 @@ class TelnetClient {
 public:
 
   bool connect(IPAddress ip, uint16_t port);
+  bool connect(const char* host, uint16_t port);
   int available();
   bool connected();
   char readChar();               // read character from server
