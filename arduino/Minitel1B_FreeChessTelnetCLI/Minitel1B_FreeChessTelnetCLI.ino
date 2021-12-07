@@ -23,8 +23,9 @@ Minitel minitel(MINITEL_PORT);
 TelnetClient telnet;
 const char* ssid     = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASS";
-IPAddress freechessIP (167, 114, 65, 195); 
-uint16_t telnetPort = 5000;
+//IPAddress freechessIP (167, 114, 65, 195); 
+const char* host = "freechess.org"
+uint16_t port = 5000;
 
 void setup() {
   
@@ -62,8 +63,8 @@ void setup() {
 
   // Host connection
   delay(100);
-  debugPrint("Connecting to " + String(freechessIP));
-  if (telnet.connect(freechessIP, telnetPort)) debugPrint("Connected");
+  debugPrint("Connecting to " + String(host));
+  if (telnet.connect(host, port)) debugPrint("Connected");
   else debugPrint("Connection failed");
 }
 
