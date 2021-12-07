@@ -6,6 +6,11 @@ bool TelnetClient::connect(IPAddress ip, uint16_t port) {
 }
 // -------------------------------------------------------------------
 
+bool TelnetClient::connect(const char* host, uint16_t port) {
+  return client.connect(host, port);
+}
+// -------------------------------------------------------------------
+
 int TelnetClient::available() {
   return client.available();
 }
