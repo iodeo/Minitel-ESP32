@@ -75,8 +75,10 @@ byte player = _WHITE;
 
 void setup() {
 
-  debugBegin(9600);
+  debugBegin(115200);
   debugPrint("> Debug start");
+  
+  delay(500);
 
   // Minitel setup
   int baud = minitel.searchSpeed();
