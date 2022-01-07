@@ -2,7 +2,7 @@
 
 uPyMinitel is an adaptation of [PyMinitel library](https://github.com/Zigazou/PyMinitel)
 
-uPyMinitel provides a Minitel class to handle minitel inputs and outputs in a way which is faithfull to minitel technical spec. This is a good way to discover in details how the device works.
+uPyMinitel provides a Minitel class fidele to minitel technical specs. This is areally good way to get started with Minitel and discover in details how it works.
 
 ## Example description
 
