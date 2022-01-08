@@ -2,9 +2,9 @@
 
 uPyMinitel is an adaptation of [PyMinitel library](https://github.com/Zigazou/PyMinitel) made by Zigazou under GNU GPL v3
 
-uPyMinitel provides a Minitel class faithful to minitel technical specs. This is a really good way to get started with Minitel and discover in details how it works.
+uPyMinitel provides a Minitel class faithful to minitel technical specs. This is a really good way to get started with Minitel and discover in details how it works. It also provides some UI tools (menu, text prompt, etc)
 
 ## Example description
 
-* uPyMynitel/main.py is a minimal sample code. It only imports required libraries and declare a minitel instance in order to start playing with your Minitel from thonny IDE shell. 
-* uPyMinitel/test/ contains sample codes to test  ui tools.
+* uPyMynitel/main.py is a minimal sample code. It only imports librarie and declare a minitel instance in order to start playing with your Minitel from thonny IDE shell. 
+* uPyMinitel/test/ contains sample codes to test ui tools.
