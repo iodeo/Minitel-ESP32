@@ -6,8 +6,8 @@
  */
 
 #include <WiFi.h>
-#include <WebSocketsClient.h>
-#include <Minitel1B_Hard.h>
+#include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
+#include <Minitel1B_Hard.h>   // src: https://github.com/eserandour/Minitel1B_Hard.git
 
 // ---------------------------------------
 // ------ Minitel port configuration
