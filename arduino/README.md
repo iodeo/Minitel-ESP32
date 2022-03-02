@@ -8,6 +8,10 @@ Where name is starting by "Minitel1B", the following lib must be added:
 
 https://github.com/eserandour/Minitel1B_Hard
 
+Minitel1b_Webocket_Client requires this additional lib:
+
+https://github.com/Links2004/arduinoWebSockets.git
+
 ## libssh
 
 For LibSSH_Shell, the following lib must be added:
