@@ -134,7 +134,7 @@ void setup() {
   debugPrintf("\n  WiFi connected with IP %s\n", WiFi.localIP().toString().c_str());
 
   // We connect to Websocket server
-  debugPrintf("\n> Websocket connection");
+  debugPrintf("\n> Websocket connection\n");
   if (protocol[0] == '\0') {
     if (ssl) webSocket.beginSSL(host, port, path);
     else webSocket.begin(host, port, path);
@@ -196,14 +196,13 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       break;
       
     case WStype_TEXT:
-      debugPrintf("[WS] got %u chars", len);
+      debugPrintf("[WS] got %u chars\n", len);
       if (len > 0) {
-        debugPrintf(": %s\n", payload);
+        debugPrintf("  >  %s\n", payload);
         for (size_t i = 0; i < len; i++) {
           minitel.writeByte(payload[i]);
         }
       }
-      else debugPrintf("\n");
       break;
       
     case WStype_BIN:
