@@ -120,7 +120,7 @@ void setup() {
   debugPrintf("  - Baud detected: %u\n", baud);
   if (MINITEL_DISABLE_ECHO) {
     minitel.echo(false);
-    debugPrintf("  - Echo disabled\n", baud);
+    debugPrintf("  - Echo disabled\n");
   }
 
   // We connect to WiFi network
