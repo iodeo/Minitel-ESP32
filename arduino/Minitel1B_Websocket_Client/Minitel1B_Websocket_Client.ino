@@ -172,15 +172,11 @@ void loop() {
     // prepare data to send over websocket
     uint8_t payload[4];
     size_t len = 0;
-    uint8_t shift = 0;
-    for (int i = 0; i < 4; i++) {
-      uint32_t tmp = key >> shift;
-      if (tmp!=0) len = i+1;
-      payload[3-i] = uint8_t(tmp);
-      shift+=8; //size_of(uint8_t)
+    for (len = 0; key != 0 && len < 4; len++) {
+      payload[3-len] = uint8_t(key);
+      key = key >> 8;
     }
-    shift = 4-len;
-    webSocket.sendTXT(payload+shift, len);
+    webSocket.sendTXT(payload+4-len, len);
   }
 
 }
