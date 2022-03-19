@@ -11,14 +11,14 @@ Sample codes are given :
 * [Arduino IDE](arduino)
 * [MicroPython](upython)
 
-Instructions to start programming are given in the [hackaday project page](https://hackaday.io/project/180473-minitel-esp32)
-
 ## HARDWARE
 
-Schematic is provided to connect any cheap ESP32 modules to the minitel. 
+Example schematic is provided to connect  cheap ESP32 modules to the minitel.
 
 Schematic for ESP MINITEL DEVBOARD is also provided.
 
-Demo video : https://youtu.be/iOB85X8F1vI
+## EXTERNAL LINKS
 
-Tindie's page: https://www.tindie.com/products/25418/
+* Demo video : https://youtu.be/iOB85X8F1vI
+* Hackaday's project page : https://hackaday.io/project/180473
+* Tindie's page: https://www.tindie.com/products/25418/
