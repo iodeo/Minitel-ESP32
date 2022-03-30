@@ -15,7 +15,8 @@ Sample codes are given :
 
 Example schematic is provided to connect  cheap ESP32 modules to the minitel.
 
-Schematic for ESP MINITEL DEVBOARD is also provided.
+Minitel-ESP32 dev board is under CC-BY-SA 4,0
+Schematic and Gerber are provided
 
 ## EXTERNAL LINKS
 
