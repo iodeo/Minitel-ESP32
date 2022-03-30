@@ -26,4 +26,4 @@ The devboard includes :
 The pcb has same size as esp32 common modules thanks to two sided assembly. 
 <br>It can be fitted with DIN or JST-XH connector.
 
-Available on demand at [contact@iodeo.fr](mailto:contact@iodeo.fr)
+Available on [Tindie](https://www.tindie.com/products/25418/)
