@@ -155,12 +155,11 @@ void MiniChess::makeMove() {
   drawMove();
   byte b = board[cx][cy];
   // Petit roque  et Grand roque
-  if ((b & 0b01111111) == KING) {
+  if ((b & PIECE_MASK) == KING) {
     if ((b & COLOR_MASK) == _BLACK) {
       Serial.println("BLACK");
       if (scx == 4 && scy == 0) {
         if (cx == 1 && cy == 0) {
-          Serial.println("ROQUE A GAUCHE");
           // roque des noirs à gauche
           markCase(cx, cy, false);
           scx = 0; scy = 0;
@@ -386,16 +385,15 @@ void MiniChess::markCase(int cx, int cy, bool mark, bool force_erase) {
   if (mark) {
     // on détermine la couleur à mettre
     byte color = CARACTERE_BLANC;
-    if (player == _WHITE)
-      if (selected) color = CARACTERE_NOIR;
-    if (player == _BLACK) {
-      if (!selected) color = CARACTERE_NOIR;
-    }
+    if (selected && (player == _WHITE))
+      color = CARACTERE_NOIR;
+    if (!selected && (player == _BLACK))
+      color = CARACTERE_NOIR;
     // on affiche la marque
     minitel.attributs(color);
     minitel.graphic(0b111111);
   }
-  else {
+  else {  // mark = false
     if (!selected || force_erase)
       // on efface la marque
       minitel.graphic(0b000000);
