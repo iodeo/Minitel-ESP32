@@ -24,3 +24,5 @@ Schematic and Gerber are provided
 * Demo video : https://youtu.be/iOB85X8F1vI
 * Hackaday's project page : https://hackaday.io/project/180473
 * Tindie's page: https://www.tindie.com/products/25418/
+
+<a href="https://www.tindie.com/stores/iodeo"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-larges.png" alt="I sell on Tindie" width="200" height="104"></a>
