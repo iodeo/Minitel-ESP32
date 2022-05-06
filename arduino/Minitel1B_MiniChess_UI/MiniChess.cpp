@@ -157,7 +157,6 @@ void MiniChess::makeMove() {
   // Petit roque  et Grand roque
   if ((b & PIECE_MASK) == KING) {
     if ((b & COLOR_MASK) == _BLACK) {
-      Serial.println("BLACK");
       if (scx == 4 && scy == 0) {
         if (cx == 1 && cy == 0) {
           // roque des noirs à gauche
