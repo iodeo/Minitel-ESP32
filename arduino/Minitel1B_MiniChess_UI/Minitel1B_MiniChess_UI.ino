@@ -8,6 +8,8 @@
 MiniChess chess(MINITEL_PORT);
 
 void setup() {
+  // on attend que le minitel démarre
+  delay(500);
   // réglage port série et config minitel
   chess.initializeMinitel(BAUDS); 
 
