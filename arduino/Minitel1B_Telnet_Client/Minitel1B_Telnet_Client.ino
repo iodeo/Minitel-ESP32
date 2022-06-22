@@ -44,6 +44,18 @@ bool scroll = true; // mode rouleau
 bool echo = true; // local echo
 /**/
 
+/****** GLASSTTY - TELSTAR ------ connecté le 22 juin 2022
+// https://glasstty.com/using-minitel-terminals-with-telstar/
+// changer les bauds à 1200 bauds (lignes 64 & 65), 
+// appuyer CONNEXIONFIN pour que le minitel soit détecté
+// puis faire *# pour recharger la page
+const char* host = "glasstty.com";
+uint16_t port = 6502; // 
+bool col80 = false; // mode mixte
+bool scroll = false; // mode rouleau
+bool echo = false; // local echo
+/**/
+
 void setup() {
   
   debugBegin(115200);
