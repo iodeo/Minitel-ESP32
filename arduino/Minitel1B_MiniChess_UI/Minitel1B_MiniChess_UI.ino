@@ -1,4 +1,4 @@
-#include "Minichess.h"
+#include "MiniChess.h"
 #include <Minitel1B_Hard.h>
 
 #define MINITEL_PORT Serial2 // For ESP32 dev board
