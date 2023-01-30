@@ -32,11 +32,18 @@
 // DEBUT DU PROGRAMME
 
 ////////////////////////////////////////////////////////////////////////
+#include <Preferences.h>
 
+struct MyObject {
+  char nome[40];
+  int numero;
+};
 
 #include <Minitel1B_Hard.h>
 
 Minitel minitel(Serial2);  // Le port utilisé sur ESP32
+
+Preferences prefs;
 
 int wait = 10000;
 
@@ -45,6 +52,7 @@ int wait = 10000;
 void setup() {
   Serial.begin(115200);  // Le port de débug
   minitel.changeSpeed(minitel.searchSpeed());
+  //minitel.changeSpeed(1200);
   minitel.echo(false);
   minitel.extendedKeyboard(); // activation des touches curseurs
 }
@@ -63,7 +71,11 @@ void loop() {
   demoCurseur();
 }
 
+struct MyObject customVar;
+
 void mainFunction() {
+  int eeAddress = 0;
+  //customVar = (MyObject) EEPROM.read(eeAddress);
   String baudStr = String(minitel.searchSpeed());
   minitel.newScreen();
   minitel.textMode();
@@ -84,6 +96,28 @@ void mainFunction() {
   minitel.moveCursorXY(2,14); minitel.attributs(INVERSION_FOND); minitel.print(" 5 "); minitel.attributs(FOND_NORMAL); minitel.print(" Tasse e tributi");
   minitel.moveCursorXY(2,16); minitel.attributs(INVERSION_FOND); minitel.print(" 6 "); minitel.attributs(FOND_NORMAL); minitel.print(" Palio del lancio del gatto");
   minitel.moveCursorXY(2,18);
+  minitel.println();
+  String s = "42x4f";
+  String w = "42x4f";
+  if (s == w) {
+    minitel.println("sono uguali");
+  } else {
+    minitel.println("sono diversi");
+  }
+  int n = s.toInt();
+  minitel.println(String(n));
+  prefs.begin("CommPro", true);
+  String var = "undefined";
+  if (prefs.isKey("var")) {
+    var = prefs.getString("var");
+  }
+  prefs.end();
+  
+  minitel.println(var);
+  prefs.begin("CommPro",false);
+  prefs.putString("var", "Perbacchio");
+  prefs.end();
+  
 /*
   String s = "AB";
   s.concat("c");
@@ -91,11 +125,18 @@ void mainFunction() {
   s.remove(s.length()-1);
   minitel.print(s);
  */
+
 minitel.print("> ");
 String name = inputString();
 Serial.printf("Out=%s\n",name);
-minitel.print("Hello, " + name + "!");
-// minitel.println(name);
+minitel.println("Hello, " + name + "!");
+
+strcpy(customVar.nome, "Ciccillo");
+customVar.numero=135;
+
+//EEPROM.write(eeAddress,customVar);
+String t=String(customVar.nome);
+minitel.println(t);
 
 /*
   int i=0;
