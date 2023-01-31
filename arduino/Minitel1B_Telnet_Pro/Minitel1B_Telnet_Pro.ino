@@ -109,8 +109,8 @@ void setup() {
       if (key == 18) { // CTRL+R = RESET
         minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
-        char *reset = NULL;
-        *reset = 1;
+        WiFi.disconnect();
+        ESP.restart();
       }
     }
     debugPrintln();
@@ -181,9 +181,7 @@ void loop() {
       minitel.moveCursorXY(1, 1);
       minitel.echo(true);
       minitel.pageMode();
-      //ESP.restart();
-      char *reset = NULL;
-      *reset = 1;
+      ESP.restart();
     }
     telnet.write((uint8_t) tmp);
     debugPrintf("[keyboard] %x\n", tmp);
@@ -225,8 +223,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.moveCursorXY(1, 1);
         minitel.echo(true);
         minitel.pageMode();
-        char *reset = NULL;
-        *reset = 1;
+        ESP.restart();
       }
     }
     key = minitel.getKeyCode();
@@ -291,6 +288,9 @@ void showPrefs() {
   minitel.attributs(DOUBLE_LARGEUR);
   minitel.print("TO CONNECT");
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
+
+  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H - Francesco Sblendorio");
+  minitel.attributs(CARACTERE_BLANC);
 }
 
 void printPassword() {
@@ -320,8 +320,7 @@ void setPrefs() {
         minitel.moveCursorXY(1, 1);
         minitel.echo(true);
         minitel.pageMode();
-        char *reset = NULL;
-        *reset = 1;
+        ESP.restart();
       } else if (key == '1') {
         setParameter(10, 4, ssid, false);
       } else if (key == '2') {
@@ -339,9 +338,7 @@ void setPrefs() {
       }
     }
     if (key >= '1' && key <= '7') {
-      minitel.moveCursorXY(1, 24); minitel.attributs(CARACTERE_BLANC); minitel.print("WAIT");
       savePrefs();
-      minitel.moveCursorXY(1, 24); minitel.clearLineFromCursor();
     }
     key = minitel.getKeyCode();
   }
