@@ -264,6 +264,7 @@ void savePrefs() {
 
 void showPrefs() {
   minitel.noCursor();
+  minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
@@ -289,6 +290,8 @@ void showPrefs() {
   minitel.print("TO CONNECT");
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
 
+  minitel.attributs(CARACTERE_JAUNE); minitel.moveCursorXY(9,21); minitel.print("use CTRL+R to restart");
+
   minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H - Francesco Sblendorio");
   minitel.attributs(CARACTERE_BLANC);
 }
@@ -297,7 +300,11 @@ void printPassword() {
   if (password == NULL || password == "") {
     minitel.print("-undefined-");
   } else {
-    for (int i = 0; i < password.length(); ++i) minitel.print("*");
+    minitel.graphicMode();
+    minitel.attributs(DEBUT_LIGNAGE);
+    for (int i = 0; i < password.length(); ++i) minitel.graphic(0b001100);
+    minitel.attributs(FIN_LIGNAGE);
+    minitel.textMode();
   }
 }
 
@@ -365,9 +372,13 @@ void setParameter(int x, int y, String &destination, bool mask) {
   if (destination == "") {
     minitel.print("-undefined-");
   } else {
-    if (mask)
-      for (int i = 0; i < destination.length(); ++i) minitel.print("*");
-    else
+    if (mask) {
+      minitel.graphicMode();
+      minitel.attributs(DEBUT_LIGNAGE);
+      for (int i = 0; i < destination.length(); ++i) minitel.graphic(0b001100);
+      minitel.attributs(FIN_LIGNAGE);
+      minitel.textMode();
+    } else
       printStringValue(destination);
   }
   minitel.clearLineFromCursor();
