@@ -28,6 +28,12 @@ Preferences prefs;
 String ssid("");
 String password("");
 
+String host("");
+uint16_t port = 0;
+bool scroll = true;
+bool echo = false;
+bool col80 = false;
+
 /****** TELETEL ------ connecté le 9 déc 2021
   String host = "home.teletel.org";
   uint16_t port = 9000;
@@ -82,17 +88,17 @@ void setup() {
     minitel.textMode();
     minitel.echo(false);
     minitel.pageMode();
-    
+
     loadPrefs();
     debugPrintln("Prefs loaded");
-  
+
     minitel.clearScreen();
     showPrefs();
     setPrefs();
-  
-  
+
+
     minitel.println("Connecting, please wait. CTRL+R to reset");
-  
+
     // WiFi connection
     debugPrintf("\nWiFi Connecting to %s ", ssid.c_str());
     WiFi.begin(ssid.c_str(), password.c_str());
@@ -112,12 +118,12 @@ void setup() {
     debugPrintln(WiFi.localIP());
     minitel.print("Connected with IP ");
     minitel.println(WiFi.localIP().toString());
-  
+
     // Telnet server connection
     delay(100);
     debugPrintf("Connecting to %s\n", host.c_str());
     minitel.print("Connecting to "); minitel.print(host); minitel.print(":"); minitel.println(String(port));
-  
+
     if (telnet.connect(host.c_str(), port)) {
       debugPrintln("Connected");
     } else {
@@ -131,13 +137,13 @@ void setup() {
 
   minitel.textMode();
   minitel.clearScreen();
-  
+
   // Set 40 or 80 columns
   if (col80) {
     minitel.modeMixte();
-  } else { 
-    minitel.modeVideotex(); 
-    minitel.textMode(); 
+  } else {
+    minitel.modeVideotex();
+    minitel.textMode();
   }
 
   // Set echo
@@ -175,6 +181,7 @@ void loop() {
       minitel.moveCursorXY(1, 1);
       minitel.echo(true);
       minitel.pageMode();
+      //ESP.restart();
       char *reset = NULL;
       *reset = 1;
     }
@@ -260,7 +267,7 @@ void savePrefs() {
 
 void showPrefs() {
   minitel.noCursor();
-  minitel.moveCursorXY(9,1);
+  minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
   minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
@@ -273,14 +280,14 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Scroll: "); writeBool(scroll); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor(); minitel.println();
-  
-  minitel.moveCursorXY(16,15);
-  minitel.attributs(DOUBLE_LARGEUR); minitel.attributs(CARACTERE_MAGENTA); // minitel.attributs(CLIGNOTEMENT); 
+
+  minitel.moveCursorXY(16, 15);
+  minitel.attributs(DOUBLE_LARGEUR); minitel.attributs(CARACTERE_MAGENTA); // minitel.attributs(CLIGNOTEMENT);
   minitel.print("PRESS");
-  minitel.moveCursorXY(16,16);
+  minitel.moveCursorXY(16, 16);
   minitel.attributs(DOUBLE_GRANDEUR);
   minitel.print("SPACE");
-  minitel.moveCursorXY(10,18);
+  minitel.moveCursorXY(10, 18);
   minitel.attributs(DOUBLE_LARGEUR);
   minitel.print("TO CONNECT");
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
@@ -290,7 +297,7 @@ void printPassword() {
   if (password == NULL || password == "") {
     minitel.print("-undefined-");
   } else {
-    for (int i=0; i<password.length(); ++i) minitel.print("*");
+    for (int i = 0; i < password.length(); ++i) minitel.print("*");
   }
 }
 
@@ -332,9 +339,9 @@ void setPrefs() {
       }
     }
     if (key >= '1' && key <= '7') {
-      minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLANC); minitel.print("WAIT");
+      minitel.moveCursorXY(1, 24); minitel.attributs(CARACTERE_BLANC); minitel.print("WAIT");
       savePrefs();
-      minitel.moveCursorXY(1,24); minitel.clearLineFromCursor();
+      minitel.moveCursorXY(1, 24); minitel.clearLineFromCursor();
     }
     key = minitel.getKeyCode();
   }
@@ -344,25 +351,25 @@ void setPrefs() {
 
 void switchParameter(int x, int y, bool &destination) {
   destination = !destination;
-  minitel.moveCursorXY(x,y); writeBool(destination);
+  minitel.moveCursorXY(x, y); writeBool(destination);
 }
 
 void setParameter(int x, int y, String &destination, bool mask) {
-  minitel.moveCursorXY(x,y); minitel.attributs(CARACTERE_BLANC);
+  minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
-  for (int i=0; i<31-destination.length(); ++i) minitel.print(".");
-  minitel.moveCursorXY(x,y);
+  for (int i = 0; i < 31 - destination.length(); ++i) minitel.print(".");
+  minitel.moveCursorXY(x, y);
   int exitCode = 0;
   String temp = inputString(destination, exitCode, '.');
   if (!exitCode && temp.length() > 0) {
     destination = String(temp);
   }
-  minitel.moveCursorXY(x,y); minitel.attributs(CARACTERE_CYAN);
+  minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
     minitel.print("-undefined-");
   } else {
     if (mask)
-      for (int i=0; i<destination.length(); ++i) minitel.print("*");
+      for (int i = 0; i < destination.length(); ++i) minitel.print("*");
     else
       printStringValue(destination);
   }
@@ -372,16 +379,16 @@ void setParameter(int x, int y, String &destination, bool mask) {
 void setIntParameter(int x, int y, uint16_t &destination) {
   String strParam = String(destination);
   if (strParam == "0") strParam = "";
-  minitel.moveCursorXY(x,y); minitel.attributs(CARACTERE_BLANC);
+  minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(strParam);
-  for (int i=0; i<31-String(destination).length(); ++i) minitel.print(".");
-  minitel.moveCursorXY(x,y);
+  for (int i = 0; i < 31 - String(destination).length(); ++i) minitel.print(".");
+  minitel.moveCursorXY(x, y);
   int exitCode = 0;
   String temp = inputString(strParam, exitCode, '.');
   if (!exitCode && temp.length() > 0) {
     destination = temp.toInt();
   }
-  minitel.moveCursorXY(x,y); minitel.attributs(CARACTERE_CYAN);
+  minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_CYAN);
   minitel.print(String(destination));
   minitel.clearLineFromCursor();
 }
