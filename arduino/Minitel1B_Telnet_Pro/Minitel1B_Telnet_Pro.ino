@@ -34,6 +34,9 @@ bool scroll = true;
 bool echo = false;
 bool col80 = false;
 
+byte connectionType = 0; // 0=Telnet 1=Websocket
+bool ssl = false;
+
 /****** TELETEL ------ connecté le 9 déc 2021
   String host = "home.teletel.org";
   uint16_t port = 9000;
@@ -247,6 +250,8 @@ void loadPrefs() {
   scroll = prefs.getBool("scroll", false);
   echo = prefs.getBool("echo", false);
   col80 = prefs.getBool("col80", false);
+  ssl = prefs.getBool("ssl", false);
+  connectionType = prefs.getUChar("connectionType", 0);
   prefs.end();
 }
 
@@ -259,6 +264,8 @@ void savePrefs() {
   if (prefs.getBool("scroll", false) != scroll) prefs.putBool("scroll", scroll);
   if (prefs.getBool("echo",   false) != echo)   prefs.putBool("echo",   echo);
   if (prefs.getBool("col80",  false) != col80)  prefs.putBool("col80",  col80);
+  if (prefs.getBool("ssl",    false) != ssl)    prefs.putBool("ssl",    ssl);
+  if (prefs.getUChar("connectionType", 0) != connectionType) prefs.putUChar("connectionType", connectionType);
   prefs.end();
 }
 
@@ -278,7 +285,11 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Scroll: "); writeBool(scroll); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor(); minitel.println();
+  minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Type  : "); writeConnectionType(connectionType); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSL   : "); writeBool(ssl); minitel.clearLineFromCursor(); minitel.println();
 
+/*
   minitel.moveCursorXY(16, 15);
   minitel.attributs(DOUBLE_LARGEUR); minitel.attributs(CARACTERE_MAGENTA); // minitel.attributs(CLIGNOTEMENT);
   minitel.print("PRESS");
@@ -289,8 +300,9 @@ void showPrefs() {
   minitel.attributs(DOUBLE_LARGEUR);
   minitel.print("TO CONNECT");
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
+*/
 
-  minitel.attributs(CARACTERE_JAUNE); minitel.moveCursorXY(9,21); minitel.print("use CTRL+R to restart");
+  minitel.attributs(CARACTERE_JAUNE); minitel.moveCursorXY(9,22); minitel.print("use CTRL+R to restart");
 
   minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H - Francesco Sblendorio");
   minitel.attributs(CARACTERE_BLANC);
@@ -318,10 +330,14 @@ void printStringValue(String s) {
 
 void setPrefs() {
   unsigned long key = minitel.getKeyCode();
+  bool valid = false;
   while (key != 32) {
+    valid = false;
     if (key != 0) {
+      valid = true;
       Serial.printf("Key = %u\n", key);
       if (key == 18) { // CTRL+R = RESET
+        valid = false;
         minitel.modeVideotex();
         minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
@@ -342,15 +358,26 @@ void setPrefs() {
         switchParameter(12, 11, echo);
       } else if (key == '7') {
         switchParameter(12, 12, col80);
+      } else if (key == '8') {
+        cycleConnectionType();
+      } else if (key == '9') {
+        switchParameter(12, 15, ssl);
+      } else {
+        valid = false;
       }
     }
-    if (key >= '1' && key <= '7') {
+    if (valid) {
       savePrefs();
     }
     key = minitel.getKeyCode();
   }
   minitel.clearScreen();
   minitel.moveCursorXY(1, 1);
+}
+
+void cycleConnectionType() {
+  connectionType = (connectionType + 1) % 2;
+  minitel.moveCursorXY(12,14); writeConnectionType(connectionType);
 }
 
 void switchParameter(int x, int y, bool &destination) {
@@ -408,4 +435,33 @@ void writeBool(bool value) {
     minitel.attributs(CARACTERE_ROUGE); minitel.print("No ");
   }
   minitel.attributs(CARACTERE_BLANC);
+}
+
+void writeConnectionType(byte connectionType) {
+  if (connectionType == 0) {
+    minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
+  } else {
+    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+  }
+  minitel.print("Telnet");
+  minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL); minitel.print("/");
+
+  if (connectionType == 1) {
+    minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
+  } else {
+    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+  }
+  minitel.print("Websocket");
+/*  
+  minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL); minitel.print("/");
+
+  if (connectionType == 2) {
+    minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
+  } else {
+    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+  }
+  minitel.print("SSH");
+*/
+
+  minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NORMAL);
 }

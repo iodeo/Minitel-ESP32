@@ -34,14 +34,15 @@
 // ---------------------------------------
 // ------ WiFi credentials
 
-const char* ssid     = "mySsid";        // your wifi network
-const char* password = "myPassword";    // your wifi password
+const char* ssid     = "FASTWEB-B2BEA9";        // your wifi network
+const char* password = "EPKP6EW71E";    // your wifi password
 
 // ---------------------------------------
 // ------ Websocket server
 
 /******  TELETEL.ORG  ---------  connecté le 2 mar 2022*/
 // ws://home.teletel.org:9001/
+/*
 char* host = "home.teletel.org";
 int port = 9001;
 char* path = "/";
@@ -71,7 +72,7 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
-/******  HACKER  --------------  connecté le 2 mar 2022
+//******  HACKER  --------------  connecté le 2 mar 2022
 // ws://mntl.joher.com:2018/?echo
 // websocket payload length up to 873
 char* host = "mntl.joher.com";
@@ -103,6 +104,17 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
+/****** SM  -------------------  connecté le 2 mar 2022
+// wss://wss.3615.live:9991/?echo
+// websocket payload length up to 128
+char* host = "bbs.sblendorio.eu";
+int port = 8082;
+char* path = "/"; 
+bool ssl = true;
+int ping_ms = 0;
+char* protocol = "";
+/**/
+
 WiFiClient client;
 WebSocketsClient webSocket;
 Minitel minitel(MINITEL_PORT);
@@ -126,6 +138,9 @@ void setup() {
   // We connect to WiFi network
   debugPrintf("\n> Wifi setup\n");
   debugPrintf("  Connecting to %s ", ssid);
+
+  minitel.extendedKeyboard();
+  
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -203,6 +218,12 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       
     case WStype_BIN:
       debugPrintf("[WS] got %u binaries - ignored\n", len);
+      if (len > 0) {
+        debugPrintf("  >  %s\n", payload);
+        for (size_t i = 0; i < len; i++) {
+          minitel.writeByte(payload[i]);
+        }
+      }
       break;
       
     case WStype_ERROR:

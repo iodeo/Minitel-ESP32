@@ -32,18 +32,14 @@
 // DEBUT DU PROGRAMME
 
 ////////////////////////////////////////////////////////////////////////
-#include <Preferences.h>
-
-struct MyObject {
-  char nome[40];
-  int numero;
-};
 
 #include <Minitel1B_Hard.h>
+#include "FS.h"
+#include "SPIFFS.h"
+#define FORMAT_SPIFFS_IF_FAILED true
 
 Minitel minitel(Serial2);  // Le port utilisé sur ESP32
 
-Preferences prefs;
 
 int wait = 10000;
 
@@ -55,6 +51,13 @@ void setup() {
   //minitel.changeSpeed(1200);
   minitel.echo(false);
   minitel.extendedKeyboard(); // activation des touches curseurs
+
+  if(!SPIFFS.begin()){
+      Serial.println("SPIFFS Mount Failed");
+      SPIFFS.format();
+      SPIFFS.begin();
+   }
+  SPIFFS.end();
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -71,11 +74,15 @@ void loop() {
   demoCurseur();
 }
 
-struct MyObject customVar;
 
 void mainFunction() {
-  int eeAddress = 0;
-  //customVar = (MyObject) EEPROM.read(eeAddress);
+  SPIFFS.begin();
+  File f = SPIFFS.open("/test.txt", FILE_WRITE);
+//  customVar.vars.nome = "Prancesco";
+//  customVar.vars.numero = 912;
+//  f.write(customVar.bytes, sizeof(customVar));
+  f.close();
+  SPIFFS.end();
   String baudStr = String(minitel.searchSpeed());
   minitel.newScreen();
   minitel.textMode();
@@ -97,26 +104,7 @@ void mainFunction() {
   minitel.moveCursorXY(2,16); minitel.attributs(INVERSION_FOND); minitel.print(" 6 "); minitel.attributs(FOND_NORMAL); minitel.print(" Palio del lancio del gatto");
   minitel.moveCursorXY(2,18);
   minitel.println();
-  String s = "42x4f";
-  String w = "42x4f";
-  if (s == w) {
-    minitel.println("sono uguali");
-  } else {
-    minitel.println("sono diversi");
-  }
-  int n = s.toInt();
-  minitel.println(String(n));
-  prefs.begin("CommPro", true);
-  String var = "undefined";
-  if (prefs.isKey("var")) {
-    var = prefs.getString("var");
-  }
-  prefs.end();
-  
-  minitel.println(var);
-  prefs.begin("CommPro",false);
-  prefs.putString("var", "Perbacchio");
-  prefs.end();
+
   
 /*
   String s = "AB";
@@ -129,15 +117,13 @@ void mainFunction() {
 minitel.print("> ");
 String name = inputString();
 Serial.printf("Out=%s\n",name);
-minitel.println("Hello, " + name + "!");
 
-strcpy(customVar.nome, "Ciccillo");
-customVar.numero=135;
 
-//EEPROM.write(eeAddress,customVar);
-String t=String(customVar.nome);
-minitel.println(t);
+SPIFFS.begin();
+listDir(SPIFFS, "/", 1);
+readFile(SPIFFS, "/test.txt");
 
+SPIFFS.end();
 /*
   int i=0;
   do {
@@ -382,4 +368,115 @@ void demoCurseur() {
   }
 }
 
-////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+   Serial.printf("Listing directory: %s\r\n", dirname);
+
+   File root = fs.open(dirname);
+   if(!root){
+      Serial.println("− failed to open directory");
+      return;
+   }
+   if(!root.isDirectory()){
+      Serial.println(" − not a directory");
+      return;
+   }
+
+   File file = root.openNextFile();
+   while(file){
+      if(file.isDirectory()){
+         Serial.print("  DIR : ");
+         Serial.println(file.name());
+         if(levels){
+            listDir(fs, file.name(), levels -1);
+         }
+      } else {
+         Serial.print("  FILE: ");
+         Serial.print(file.name());
+         Serial.print("\tSIZE: ");
+         Serial.println(file.size());
+      }
+      file = root.openNextFile();
+   }
+}
+
+void readFile(fs::FS &fs, const char * path){
+   Serial.printf("Reading file: %s\r\n", path);
+
+   File file = fs.open(path);
+   if(!file || file.isDirectory()){
+       Serial.println("− failed to open file for reading");
+       return;
+   }
+
+   Serial.println("− read from file:");
+   while(file.available()){
+      Serial.write(file.read());
+   }
+}
+
+void writeFile(fs::FS &fs, const char * path, const char * message){
+   Serial.printf("Writing file: %s\r\n", path);
+
+   File file = fs.open(path, FILE_WRITE);
+   if(!file){
+      Serial.println("− failed to open file for writing");
+      return;
+   }
+   if(file.print(message)){
+      Serial.println("− file written");
+   }else {
+      Serial.println("− frite failed");
+   }
+}
+
+void appendFile(fs::FS &fs, const char * path, const char * message){
+   Serial.printf("Appending to file: %s\r\n", path);
+
+   File file = fs.open(path, FILE_APPEND);
+   if(!file){
+      Serial.println("− failed to open file for appending");
+      return;
+   }
+   if(file.print(message)){
+      Serial.println("− message appended");
+   } else {
+      Serial.println("− append failed");
+   }
+}
+
+void renameFile(fs::FS &fs, const char * path1, const char * path2){
+   Serial.printf("Renaming file %s to %s\r\n", path1, path2);
+   if (fs.rename(path1, path2)) {
+      Serial.println("− file renamed");
+   } else {
+      Serial.println("− rename failed");
+   }
+}
+
+void deleteFile(fs::FS &fs, const char * path){
+   Serial.printf("Deleting file: %s\r\n", path);
+   if(fs.remove(path)){
+      Serial.println("− file deleted");
+   } else {
+      Serial.println("− delete failed");
+   }
+}
