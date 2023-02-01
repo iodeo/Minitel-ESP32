@@ -1,6 +1,9 @@
 #include <Minitel1B_Hard.h>
 #include <Preferences.h>
 #include <WiFi.h>
+#include "FS.h"
+#include "SPIFFS.h"
+
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 
 #define MINITEL_PORT Serial2
@@ -13,12 +16,10 @@
 #define debugPrint(x)     DEBUG_PORT.print(x)
 #define debugPrintln(x)   DEBUG_PORT.println(x)
 #define debugPrintf(...)    DEBUG_PORT.printf(__VA_ARGS__)
-//#define debugPrintf(x,y)  DEBUG_PORT.printf(x,y)
 #else // Debug disabled : Empty macro functions
 #define debugBegin(x)
 #define debugPrint(x)
 #define debugPrintln(x)
-//#define debugPrintf(x,y)
 #define debugPrintf(...)
 
 #endif
@@ -77,8 +78,26 @@ bool ssl = false;
   bool echo = false; // local echo
   /**/
 
-void setup() {
+void initFS() {
+  boolean ok = SPIFFS.begin();
+  if (!ok)
+  {
+    ok = SPIFFS.format();
+    if (ok) SPIFFS.begin();
+  }
+  if (!ok)
+  {
+    debugPrintf("%% Aborting now. Problem initializing Filesystem. System HALTED\n");
+    minitel.println("System HALTED.");
+    minitel.println("problem initializing filesystem");
+    while (1) delay(5000);
+  }
+  debugPrintf(
+    "%% Mounted SPIFFS used=%d total=%d\r\n", SPIFFS.usedBytes(),
+    SPIFFS.totalBytes());
+}
 
+void setup() {
   debugBegin(115200);
   debugPrintln("----------------");
   debugPrintln("Debug ready");
