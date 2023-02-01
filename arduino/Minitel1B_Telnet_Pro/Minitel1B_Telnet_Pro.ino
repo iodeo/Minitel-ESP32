@@ -331,8 +331,8 @@ void savePrefs() {
 }
 
 void showPrefs() {
-  minitel.noCursor();
-  minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR);
+  minitel.textMode(); minitel.noCursor();
+  minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();;
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
@@ -352,6 +352,8 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("PingMS: "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(ping_ms)); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prot. : "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
 
+  displaySaveLoad();
+
 /*
   minitel.moveCursorXY(16, 15);
   minitel.attributs(DOUBLE_LARGEUR); minitel.attributs(CARACTERE_MAGENTA); // minitel.attributs(CLIGNOTEMENT);
@@ -365,10 +367,26 @@ void showPrefs() {
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
 */
 
-  minitel.attributs(CARACTERE_JAUNE); minitel.moveCursorXY(9,22); minitel.print("use CTRL+R to restart");
+  minitel.attributs(GRANDEUR_NORMALE);
+  minitel.attributs(CARACTERE_JAUNE); 
+  minitel.moveCursorXY(1,22);
+  minitel.attributs(INVERSION_FOND); minitel.print(" SPACE "); minitel.attributs(FOND_NORMAL); minitel.print(" to connect   ");
+  minitel.attributs(INVERSION_FOND); minitel.print(" CTRL+R "); minitel.attributs(FOND_NORMAL); minitel.print(" to restart");
 
-  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H - Francesco Sblendorio");
+  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
   minitel.attributs(CARACTERE_BLANC);
+}
+
+void displaySaveLoad() {
+  minitel.moveCursorXY(2,18); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
+  minitel.moveCursorXY(6,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
+  minitel.rect(1,17,4,20);
+
+  int delta=24;
+  minitel.moveCursorXY(2+delta,18); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("L");
+  minitel.moveCursorXY(6+delta,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
+  minitel.rect(1+delta,17,4+delta,20);
+
 }
 
 void printPassword() {
@@ -392,7 +410,7 @@ void printStringValue(String s) {
 }
 
 
-void setPrefs() {
+int setPrefs() {
   unsigned long key = minitel.getKeyCode();
   bool valid = false;
   while (key != 32) {
@@ -428,6 +446,8 @@ void setPrefs() {
         ping_ms = temp;
       } else if (key == '9') {
         setParameter(12, 15, protocol, false, true);
+      } else if (key == 's' || key == 'S') {
+        savePreset();
       } else {
         valid = false;
       }
@@ -439,6 +459,14 @@ void setPrefs() {
   }
   minitel.clearScreen();
   minitel.moveCursorXY(1, 1);
+  return 0;
+}
+
+void savePreset() {
+  for (int i=17; i<=20; ++i) {
+    minitel.moveCursorXY(1,i);
+    minitel.clearLineFromCursor();
+  }
 }
 
 void cycleConnectionType() {
