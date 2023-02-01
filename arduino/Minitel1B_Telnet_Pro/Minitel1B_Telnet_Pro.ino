@@ -261,7 +261,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
       if (key >= 32 && key <= 127) {
         out.concat((char)key);
         minitel.printChar(key);
-      } else if (out.length() > 0 && (key == 8 || key == 4935)) {
+      } else if (out.length() > 0 && (key == 8 || key == 4935)) { // BACKSPACE
         out.remove(out.length() - 1);
         minitel.noCursor();
         minitel.moveCursorLeft(1);
@@ -275,6 +275,15 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.echo(true);
         minitel.pageMode();
         ESP.restart();
+      } else if (key == 4933) { // ANNUL
+        minitel.noCursor();
+        minitel.moveCursorLeft(out.length());
+        for (int i=0; i<out.length(); ++i) {
+          minitel.printChar(padChar);
+        }
+        minitel.moveCursorLeft(out.length());
+        out = "";
+        minitel.cursor();
       }
     }
     key = minitel.getKeyCode();
