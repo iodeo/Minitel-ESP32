@@ -468,8 +468,16 @@ void savePreset() {
     minitel.moveCursorXY(1,i);
     minitel.clearLineFromCursor();
   }
-  minitel.moveCursorXY(1,17); minitel.attributs(CARACTERE_BLANC); minitel.println("Save preset with name:");
-  setParameter(1, 18, presetName, false, true);
+  minitel.moveCursorXY(1,18); minitel.attributs(CARACTERE_BLANC); minitel.println("Save preset with name:");
+  setParameter(1, 19, presetName, false, true);
+
+  // TODO: SAVE PRESET
+
+  for (int i=17; i<=20; ++i) {
+    minitel.moveCursorXY(1,i);
+    minitel.clearLineFromCursor();
+  }
+  displaySaveLoad();
 }
 
 void cycleConnectionType() {
