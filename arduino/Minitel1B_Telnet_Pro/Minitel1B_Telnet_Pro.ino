@@ -332,7 +332,7 @@ void savePrefs() {
 
 void showPrefs() {
   minitel.textMode(); minitel.noCursor();
-  minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();;
+  minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
@@ -463,10 +463,13 @@ int setPrefs() {
 }
 
 void savePreset() {
+  String presetName("");
   for (int i=17; i<=20; ++i) {
     minitel.moveCursorXY(1,i);
     minitel.clearLineFromCursor();
   }
+  minitel.moveCursorXY(1,17); minitel.attributs(CARACTERE_BLANC); minitel.println("Save preset with name:");
+  setParameter(1, 18, presetName, false, true);
 }
 
 void cycleConnectionType() {
@@ -484,7 +487,7 @@ void setParameter(int x, int y, String &destination, bool mask, bool allowBlank)
   minitel.print(destination);
   Serial.printf("************ %d ***********\n", 41 - x - destination.length());
   int len = 41 - x - destination.length();
-  if (len <= 0) len = 0;
+  if (len < 0) len = 0;
   for (int i = 0; i < len; ++i) minitel.print(".");
   minitel.moveCursorXY(x, y);
   int exitCode = 0;
