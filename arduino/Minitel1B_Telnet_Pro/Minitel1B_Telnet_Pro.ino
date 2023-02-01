@@ -277,11 +277,15 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         ESP.restart();
       } else if (key == 4933) { // ANNUL
         minitel.noCursor();
-        minitel.moveCursorLeft(out.length());
+        for (int i=0; i<out.length(); ++i) {
+          minitel.moveCursorLeft(1);
+        }
         for (int i=0; i<out.length(); ++i) {
           minitel.printChar(padChar);
         }
-        minitel.moveCursorLeft(out.length());
+        for (int i=0; i<out.length(); ++i) {
+          minitel.moveCursorLeft(1);
+        }
         out = "";
         minitel.cursor();
       }
