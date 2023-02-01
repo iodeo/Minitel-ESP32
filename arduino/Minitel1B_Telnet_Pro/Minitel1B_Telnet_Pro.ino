@@ -605,7 +605,7 @@ void loopWebsocket() {
       payload[3-len] = uint8_t(key);
       key = key >> 8;
     }
-    webSocket.sendTXT(payload+4-len, len);
+    webSocket.sendBIN(payload+4-len, len);
   }
 
 }
@@ -614,6 +614,12 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
   switch(type) {
     case WStype_DISCONNECTED:
       debugPrintf("[WS] Disconnected!\n");
+      minitel.println();
+      minitel.println("DISCONNECTING...");
+      delay(3000);
+      webSocket.disconnect();
+      WiFi.disconnect();
+      ESP.restart();
       break;
       
     case WStype_CONNECTED:
@@ -631,7 +637,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       break;
       
     case WStype_BIN:
-      debugPrintf("[WS] got %u binaries - ignored\n", len);
+      debugPrintf("[WS] got %u binaries\n", len);
       if (len > 0) {
         debugPrintf("  >  %s\n", payload);
         for (size_t i = 0; i < len; i++) {
