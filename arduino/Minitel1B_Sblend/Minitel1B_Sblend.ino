@@ -86,6 +86,59 @@ void mainFunction() {
   String baudStr = String(minitel.searchSpeed());
   minitel.newScreen();
   minitel.textMode();
+
+
+
+
+
+
+
+
+  bool websocket = true;
+
+  //String url="wss://ciao.it:8080/path";
+  String url="wsS://mntl.joHer.com:2018/?eCho";
+  bool ssl;
+  String host;
+  uint32_t port;
+  String path;
+
+  separateUrl(url, host, port, ssl, path);
+  
+
+
+  Serial.println("************************");
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.print("Port: ");
+  Serial.println(port);
+  Serial.print("SSL: ");
+  Serial.println(ssl ? "si" : "no");
+  Serial.print("Hostname: ");
+  Serial.println(host);
+  Serial.print("Path: ");
+  Serial.println(path);
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println("************************");
+
+
+
+
+
+
+
+
+
+
+
+  while (true) {
+    delay(1000);
+  }
   minitel.moveCursorXY(12,1);
   minitel.attributs(DOUBLE_HAUTEUR);
   minitel.print("Comune di Bugliano");
@@ -479,4 +532,51 @@ void deleteFile(fs::FS &fs, const char * path){
    } else {
       Serial.println("− delete failed");
    }
+}
+
+
+
+
+
+
+
+
+
+
+void separateUrl(String url, String &host, uint32_t &port, bool &ssl, String &path) {
+
+  url.trim();
+  String temp = String(url);
+  temp.toLowerCase();
+
+  if (temp.startsWith("wss://")) {
+    ssl = true;
+    url.remove(0, 6);
+  } else if (temp.startsWith("ws://")) {
+    ssl = false;
+    url.remove(0, 5);
+  } else {
+    ssl = false;
+  }
+
+  int colon = url.indexOf(':');
+  int slash = url.indexOf('/', colon);
+
+  if (slash == -1 && colon == -1) {
+    host = url;
+    port = 0;
+    path = "/";
+  } else if (slash == -1 && colon != -1) {
+    host = url.substring(0, colon);
+    port = url.substring(colon+1).toInt();
+    path = "/";
+  } else if (slash != -1 && colon == -1) {
+    host = url.substring(0, slash);
+    port = 0;
+    path = url.substring(slash+1);
+  } else if (slash != -1 && colon != -1) {
+    host = url.substring(0, colon);
+    port = url.substring(colon+1, slash).toInt();
+    path = url.substring(slash);
+  }
 }

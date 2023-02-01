@@ -764,6 +764,8 @@ printf("X2\n");
   }
 }
 
+#define CONFIG_CONSOLE_UART_NUM 2 
+
 void setup()
 {
   devState = STATE_NEW;
@@ -772,13 +774,13 @@ void setup()
   setvbuf(stdin, NULL, _IONBF, 0);
   setvbuf(stdout, NULL, _IONBF, 0);
   
-  uart_driver_install((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, 256, 0, 0, NULL, 0);
-  uart_set_pin((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, 17, 16, 14, 15);
-  uart_set_baudrate((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, 9600);
-  uart_set_word_length((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, UART_DATA_7_BITS);
-  uart_set_parity((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, UART_PARITY_EVEN);
-  uart_set_stop_bits((uart_port_t)0/*CONFIG_CONSOLE_UART_NUM*/, UART_STOP_BITS_1);
-  esp_vfs_dev_uart_use_driver(0/*CONFIG_CONSOLE_UART_NUM*/);
+  uart_driver_install((uart_port_t)CONFIG_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0);
+  uart_set_pin((uart_port_t)CONFIG_CONSOLE_UART_NUM, 17, 16, 14, 15);
+  uart_set_baudrate((uart_port_t)CONFIG_CONSOLE_UART_NUM, 9600);
+  uart_set_word_length((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_DATA_7_BITS);
+  uart_set_parity((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_PARITY_EVEN);
+  uart_set_stop_bits((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_STOP_BITS_1);
+  esp_vfs_dev_uart_use_driver(CONFIG_CONSOLE_UART_NUM);
 
   tcpip_adapter_init();
   esp_event_loop_init(event_cb, NULL);

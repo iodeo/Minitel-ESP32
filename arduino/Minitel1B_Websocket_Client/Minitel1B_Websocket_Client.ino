@@ -72,7 +72,7 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
-//******  HACKER  --------------  connecté le 2 mar 2022
+/******  HACKER  --------------  connecté le 2 mar 2022
 // ws://mntl.joher.com:2018/?echo
 // websocket payload length up to 873
 char* host = "mntl.joher.com";
@@ -104,7 +104,7 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
-/****** SM  -------------------  connecté le 2 mar 2022
+//****** SM  -------------------  connecté le 2 mar 2022length
 // wss://wss.3615.live:9991/?echo
 // websocket payload length up to 128
 char* host = "bbs.sblendorio.eu";

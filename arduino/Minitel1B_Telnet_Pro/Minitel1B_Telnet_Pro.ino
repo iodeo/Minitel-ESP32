@@ -28,11 +28,15 @@ Preferences prefs;
 String ssid("");
 String password("");
 
+String url("");
 String host("");
+String path("");
 uint16_t port = 0;
 bool scroll = true;
 bool echo = false;
 bool col80 = false;
+int ping_ms = 0;
+String protocol("");
 
 byte connectionType = 0; // 0=Telnet 1=Websocket
 bool ssl = false;
@@ -98,7 +102,8 @@ void setup() {
     minitel.clearScreen();
     showPrefs();
     setPrefs();
-
+  
+    separateUrl(url);
 
     minitel.println("Connecting, please wait. CTRL+R to reset");
 
@@ -245,13 +250,13 @@ void loadPrefs() {
   debugPrintln("freeEntries = " + String(prefs.freeEntries()));
   ssid = prefs.getString("ssid", "");
   password = prefs.getString("password", "");
-  host = prefs.getString("host", "");
-  port = prefs.getUInt("port", 0);
+  url = prefs.getString("url", "");
   scroll = prefs.getBool("scroll", false);
   echo = prefs.getBool("echo", false);
   col80 = prefs.getBool("col80", false);
-  ssl = prefs.getBool("ssl", false);
   connectionType = prefs.getUChar("connectionType", 0);
+  ping_ms = prefs.getInt("ping_ms", 0);
+  protocol = prefs.getString("protocol", "");
   prefs.end();
 }
 
@@ -259,13 +264,13 @@ void savePrefs() {
   prefs.begin("telnet-pro", false);
   if (prefs.getString("ssid",     "") != ssid)     prefs.putString("ssid", ssid);
   if (prefs.getString("password", "") != password) prefs.putString("password", password);
-  if (prefs.getString("host",     "") != host)     prefs.putString("host", host);
-  if (prefs.getUInt("port", 0) != port) prefs.putUInt("port",   port);
+  if (prefs.getString("url",      "") != url)     prefs.putString("url", url);
   if (prefs.getBool("scroll", false) != scroll) prefs.putBool("scroll", scroll);
   if (prefs.getBool("echo",   false) != echo)   prefs.putBool("echo",   echo);
   if (prefs.getBool("col80",  false) != col80)  prefs.putBool("col80",  col80);
-  if (prefs.getBool("ssl",    false) != ssl)    prefs.putBool("ssl",    ssl);
   if (prefs.getUChar("connectionType", 0) != connectionType) prefs.putUChar("connectionType", connectionType);
+  if (prefs.getInt("ping_ms", 0) != ping_ms) prefs.putInt("ping_ms", ping_ms);
+  if (prefs.getString("protocol", "") != protocol) prefs.putString("protocol", protocol);
   prefs.end();
 }
 
@@ -279,15 +284,15 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(); minitel.clearLineFromCursor(); minitel.println();
   minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("3"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Host: "); minitel.attributs(CARACTERE_CYAN); printStringValue(host); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("4"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Port: "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(port)); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("3"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("URL: "); minitel.attributs(CARACTERE_CYAN); printStringValue(url); minitel.clearLineFromCursor(); minitel.println();
   minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Scroll: "); writeBool(scroll); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("4"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Scroll: "); writeBool(scroll); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor(); minitel.println();
   minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Type  : "); writeConnectionType(connectionType); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSL   : "); writeBool(ssl); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Type  : "); writeConnectionType(connectionType); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("PingMS: "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(ping_ms)); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prot. : "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
 
 /*
   minitel.moveCursorXY(16, 15);
@@ -328,6 +333,7 @@ void printStringValue(String s) {
   }
 }
 
+
 void setPrefs() {
   unsigned long key = minitel.getKeyCode();
   bool valid = false;
@@ -345,23 +351,25 @@ void setPrefs() {
         minitel.pageMode();
         ESP.restart();
       } else if (key == '1') {
-        setParameter(10, 4, ssid, false);
+        setParameter(10, 4, ssid, false, false);
       } else if (key == '2') {
-        setParameter(10, 5, password, true);
+        setParameter(10, 5, password, true, false);
       } else if (key == '3') {
-        setParameter(10, 7, host, false);
+        setParameter(9, 7, url, false, false);
       } else if (key == '4') {
-        setIntParameter(10, 8, port);
+        switchParameter(12, 9, scroll);
       } else if (key == '5') {
-        switchParameter(12, 10, scroll);
+        switchParameter(12, 10, echo);
       } else if (key == '6') {
-        switchParameter(12, 11, echo);
+        switchParameter(12, 11, col80);
       } else if (key == '7') {
-        switchParameter(12, 12, col80);
-      } else if (key == '8') {
         cycleConnectionType();
+      } else if (key == '8') {
+        uint16_t temp = ping_ms;
+        setIntParameter(12, 14, temp);
+        ping_ms = temp;
       } else if (key == '9') {
-        switchParameter(12, 15, ssl);
+        setParameter(12, 15, protocol, false, true);
       } else {
         valid = false;
       }
@@ -377,7 +385,7 @@ void setPrefs() {
 
 void cycleConnectionType() {
   connectionType = (connectionType + 1) % 2;
-  minitel.moveCursorXY(12,14); writeConnectionType(connectionType);
+  minitel.moveCursorXY(12,13); writeConnectionType(connectionType);
 }
 
 void switchParameter(int x, int y, bool &destination) {
@@ -385,19 +393,26 @@ void switchParameter(int x, int y, bool &destination) {
   minitel.moveCursorXY(x, y); writeBool(destination);
 }
 
-void setParameter(int x, int y, String &destination, bool mask) {
+void setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
   minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
-  for (int i = 0; i < 31 - destination.length(); ++i) minitel.print(".");
+  Serial.printf("************ %d ***********\n", 41 - x - destination.length());
+  int len = 41 - x - destination.length();
+  if (len <= 0) len = 0;
+  for (int i = 0; i < len; ++i) minitel.print(".");
   minitel.moveCursorXY(x, y);
   int exitCode = 0;
   String temp = inputString(destination, exitCode, '.');
-  if (!exitCode && temp.length() > 0) {
-    destination = String(temp);
+  if (!exitCode) {
+    if (allowBlank) {
+      destination = String(temp);
+    } else if (temp.length() > 0) {
+      destination = String(temp);
+    }
   }
   minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
-    minitel.print("-undefined-");
+    if (!allowBlank) minitel.print("-undefined-");
   } else {
     if (mask) {
       minitel.graphicMode();
@@ -416,7 +431,7 @@ void setIntParameter(int x, int y, uint16_t &destination) {
   if (strParam == "0") strParam = "";
   minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(strParam);
-  for (int i = 0; i < 31 - String(destination).length(); ++i) minitel.print(".");
+  for (int i = 0; i < 41 - x - String(destination).length(); ++i) minitel.print(".");
   minitel.moveCursorXY(x, y);
   int exitCode = 0;
   String temp = inputString(strParam, exitCode, '.');
@@ -465,3 +480,134 @@ void writeConnectionType(byte connectionType) {
 
   minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NORMAL);
 }
+
+void separateUrl(String url) {
+
+  url.trim();
+  String temp = String(url);
+  temp.toLowerCase();
+
+  if (temp.startsWith("wss://")) {
+    ssl = true;
+    url.remove(0, 6);
+  } else if (temp.startsWith("ws://")) {
+    ssl = false;
+    url.remove(0, 5);
+  } else if (temp.startsWith("wss:")) {
+    ssl = true;
+    url.remove(0, 4);
+  } else if (temp.startsWith("ws:")) {
+    ssl = false;
+    url.remove(0, 3);
+  } else {
+    ssl = false;
+  }
+
+  int colon = url.indexOf(':');
+  int slash = url.indexOf('/', colon);
+
+  if (slash == -1 && colon == -1) {
+    host = url;
+    port = 0;
+    path = "/";
+  } else if (slash == -1 && colon != -1) {
+    host = url.substring(0, colon);
+    port = url.substring(colon+1).toInt();
+    path = "/";
+  } else if (slash != -1 && colon == -1) {
+    host = url.substring(0, slash);
+    port = 0;
+    path = url.substring(slash+1);
+  } else if (slash != -1 && colon != -1) {
+    host = url.substring(0, colon);
+    port = url.substring(colon+1, slash).toInt();
+    path = url.substring(slash);
+  }
+
+  if (port == 0) {
+    if (connectionType == 0) {
+      port = 23;
+    } else if (connectionType == 1) {
+      port = 80;
+    } else if (connectionType == 2) {
+      port = 22;
+    }
+  }
+
+}
+
+
+/*
+void websoketLoop() {
+
+  // Websocket -> Minitel
+  webSocket.loop();
+
+  // Minitel -> Websocket
+  uint32_t key = minitel.getKeyCode(false);
+  if (key != 0) {
+    debugPrintf("[KB] got code: %X\n", key);
+    // prepare data to send over websocket
+    uint8_t payload[4];
+    size_t len = 0;
+    for (len = 0; key != 0 && len < 4; len++) {
+      payload[3-len] = uint8_t(key);
+      key = key >> 8;
+    }
+    webSocket.sendTXT(payload+4-len, len);
+  }
+
+}
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
+  switch(type) {
+    case WStype_DISCONNECTED:
+      debugPrintf("[WS] Disconnected!\n");
+      break;
+      
+    case WStype_CONNECTED:
+      debugPrintf("[WS] Connected to url: %s\n", payload);
+      break;
+      
+    case WStype_TEXT:
+      debugPrintf("[WS] got %u chars\n", len);
+      if (len > 0) {
+        debugPrintf("  >  %s\n", payload);
+        for (size_t i = 0; i < len; i++) {
+          minitel.writeByte(payload[i]);
+        }
+      }
+      break;
+      
+    case WStype_BIN:
+      debugPrintf("[WS] got %u binaries - ignored\n", len);
+      if (len > 0) {
+        debugPrintf("  >  %s\n", payload);
+        for (size_t i = 0; i < len; i++) {
+          minitel.writeByte(payload[i]);
+        }
+      }
+      break;
+      
+    case WStype_ERROR:
+      debugPrintf("[WS] WStype_ERROR\n");
+      break;
+      
+    case WStype_FRAGMENT_TEXT_START:
+      debugPrintf("[WS] WStype_FRAGMENT_TEXT_START\n");
+      break;
+      
+    case WStype_FRAGMENT_BIN_START:
+      debugPrintf("[WS] WStype_FRAGMENT_BIN_START\n");
+      break;
+      
+    case WStype_FRAGMENT:
+      debugPrintf("[WS] WStype_FRAGMENT\n");
+      break;
+      
+    case WStype_FRAGMENT_FIN:
+      debugPrintf("[WS] WStype_FRAGMENT_FIN\n");
+      break;
+  }
+}
+*/
