@@ -1,6 +1,7 @@
 #include <Minitel1B_Hard.h>
 #include <Preferences.h>
 #include <WiFi.h>
+#include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 
 #define MINITEL_PORT Serial2
 
@@ -11,18 +12,22 @@
 #define debugBegin(x)     DEBUG_PORT.begin(x)
 #define debugPrint(x)     DEBUG_PORT.print(x)
 #define debugPrintln(x)   DEBUG_PORT.println(x)
-#define debugPrintf(x,y)  DEBUG_PORT.printf(x,y)
+#define debugPrintf(...)    DEBUG_PORT.printf(__VA_ARGS__)
+//#define debugPrintf(x,y)  DEBUG_PORT.printf(x,y)
 #else // Debug disabled : Empty macro functions
 #define debugBegin(x)
 #define debugPrint(x)
 #define debugPrintln(x)
-#define debugPrintf(x,y)
+//#define debugPrintf(x,y)
+#define debugPrintf(...)
+
 #endif
 
 Minitel minitel(MINITEL_PORT);
 
 WiFiClient telnet;
 Preferences prefs;
+WebSocketsClient webSocket;
 
 // WiFi credentials
 String ssid("");
@@ -127,20 +132,51 @@ void setup() {
     minitel.print("Connected with IP ");
     minitel.println(WiFi.localIP().toString());
 
-    // Telnet server connection
-    delay(100);
-    debugPrintf("Connecting to %s\n", host.c_str());
-    minitel.print("Connecting to "); minitel.print(host); minitel.print(":"); minitel.println(String(port));
 
-    if (telnet.connect(host.c_str(), port)) {
-      debugPrintln("Connected");
-    } else {
-      debugPrintln("Connection failed");
-      minitel.println();
-      minitel.println("Connection Refused. Press any key");
-      while (minitel.getKeyCode() == 0);
-      connectionOk = false;
-    }
+    if (connectionType == 0) { // TELNET --------------------------------------------------------------------------------------
+      // Telnet server connection
+      delay(100);
+      debugPrintf("Connecting to %s\n", host.c_str());
+      minitel.print("Connecting to "); minitel.print(host); minitel.print(":"); minitel.println(String(port));
+  
+      if (telnet.connect(host.c_str(), port)) {
+        debugPrintln("Connected");
+      } else {
+        debugPrintln("Connection failed");
+        minitel.println();
+        minitel.println("Connection Refused. Press any key");
+        while (minitel.getKeyCode() == 0);
+        connectionOk = false;
+      }
+
+      
+    } else if (connectionType == 1) { // WEBSOCKET -----------------------------------------------------------------------------
+      delay(100);
+      if (protocol[0] == '\0') {
+        if (ssl) webSocket.beginSSL(host, port, path);
+        else webSocket.begin(host, port, path);
+      }
+      else {
+        debugPrintf("  - subprotocol added\n");
+        if (ssl) webSocket.beginSSL(host, port, path, protocol);
+        else webSocket.begin(host, port, path, protocol);
+      }
+      
+      webSocket.onEvent(webSocketEvent);
+      
+      if (ping_ms != 0) {
+        debugPrintf("  - heartbeat ping added\n");
+        // start heartbeat (optional)
+        // ping server every ping_ms
+        // expect pong from server within 3000 ms
+        // consider connection disconnected if pong is not received 2 times
+        webSocket.enableHeartbeat(ping_ms, 3000, 2);
+      }
+
+    }  // --------------------------------------------------------------------------------------------------------------------------
+  
+  
+  
   } while (!connectionOk);
 
   minitel.textMode();
@@ -172,6 +208,13 @@ void setup() {
 }
 
 void loop() {
+  if (connectionType == 0) // TELNET
+    loopTelnet();
+  else if (connectionType == 1) // WEBSOCKET
+    loopWebsocket();
+}
+
+void loopTelnet() {
 
   if (telnet.available()) {
     int tmp = telnet.read();
@@ -536,9 +579,7 @@ void separateUrl(String url) {
 
 }
 
-
-/*
-void websoketLoop() {
+void loopWebsocket() {
 
   // Websocket -> Minitel
   webSocket.loop();
@@ -546,6 +587,16 @@ void websoketLoop() {
   // Minitel -> Websocket
   uint32_t key = minitel.getKeyCode(false);
   if (key != 0) {
+    if (key == 18) { // CTRL + R = RESET
+      webSocket.disconnect();
+      WiFi.disconnect();
+      minitel.modeVideotex();
+      minitel.clearScreen();
+      minitel.moveCursorXY(1, 1);
+      minitel.echo(true);
+      minitel.pageMode();
+      ESP.restart();
+    }
     debugPrintf("[KB] got code: %X\n", key);
     // prepare data to send over websocket
     uint8_t payload[4];
@@ -610,4 +661,3 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       break;
   }
 }
-*/
