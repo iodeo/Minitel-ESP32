@@ -491,11 +491,30 @@ void savePresets() {
 }
 
 void loadPresets() {
-  displayPresets("Load from slot");
-  while (minitel.getKeyCode() == 0);
+  uint32_t key;
+  displayPresets("Load to slot");
+  do { 
+    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("    Choose slot, ESC or INDEX to go back");
+    while ((key = minitel.getKeyCode()) == 0);
+    if (key == 27 || key == 4933 || key == 4934) {
+      break;
+    } else if (key == 18) { // CTRL+R = RESET
+      reset();
+    } else if ( (key|32) >= 'a' && (key|32) <= 'a'+20-1) {
+      int slot = (key|32) - 'a';
+      debugPrintf("slot = %d\n", slot);
+      url = presets[slot].url;
+      scroll = presets[slot].scroll;
+      echo = presets[slot].echo;
+      col80 = presets[slot].col80;
+      connectionType = presets[slot].connectionType;
+      ping_ms = presets[slot].ping_ms;
+      protocol = presets[slot].protocol;
+      break;
+    }
+  } while (true);
   minitel.clearScreen();
-  showPrefs();  
-
+  showPrefs();
 }
 
 void displayPresets(String title) {
