@@ -503,6 +503,9 @@ void loadPresets() {
     } else if ( (key|32) >= 'a' && (key|32) <= 'a'+20-1) {
       int slot = (key|32) - 'a';
       debugPrintf("slot = %d\n", slot);
+      if (presets[slot].presetName == "") {
+        continue;
+      }
       url = presets[slot].url;
       scroll = presets[slot].scroll;
       echo = presets[slot].echo;
