@@ -108,6 +108,7 @@ void loop() {
 }
 
 
+
 typedef struct {
   String presetName = "";
   
@@ -123,17 +124,19 @@ typedef struct {
 Preset presets[20];
 
 
+
 void mainFunction() {
   String baudStr = String(minitel.searchSpeed());
   minitel.newScreen();
   minitel.textMode();
   
-/*
 
+
+/*
   initFS();
   File file = SPIFFS.open("/test.txt", FILE_WRITE);
 
-  for (int i=0; i<20; ++i) {
+  for (int i=0; i<3; ++i) {
     presets[i].presetName = "Preset n." + String(i+1);
     presets[i].url = "ws://hostnumber" + String(i+1) + ".com/?echo";
     presets[i].connectionType = i;
@@ -160,9 +163,12 @@ void mainFunction() {
 
   file.close();
   SPIFFS.end();
-
-
 */
+
+
+
+
+
 
 
 
@@ -170,23 +176,41 @@ void mainFunction() {
   initFS();
 listDir(SPIFFS, "/", 1);
 readFile(SPIFFS, "/test.txt");
-
-
   SPIFFS.end();
-
 minitel.println("Fatto 2.");
 */
 
 
+
+
+
+
+
 initFS();
 File file = SPIFFS.open("/test.txt", FILE_READ);
-
+if (file) minitel.println("SIII"); else minitel.println("NOOOOO");
 DynamicJsonDocument doc(1024);
-for (int i=0; i<20; ++i) {
-  DeserializationError error = deserializeJson(&doc, file);
-  minitel.print("URL = ");
-  String url = doc["url"];
-  minitel.println(url);
+for (int i=0; i<8; ++i) {
+  DeserializationError error = deserializeJson(doc, file);
+  if (error) {
+    presets[i].presetName = "";
+    presets[i].url = "";
+    presets[i].scroll = false;
+    presets[i].echo = false;
+    presets[i].col80 = false;
+    presets[i].connectionType = 0;
+    presets[i].ping_ms = 0;
+    presets[i].protocol = "";
+  } else {
+    String _presetName = doc["presetName"]; presets[i].presetName = _presetName == "null" ? "" : _presetName;
+    String _url = doc["url"]; presets[i].url = _url == "null" ? "" : _url;
+    bool _scroll = doc["scroll"]; presets[i].scroll = _scroll;
+    bool _echo = doc["echo"]; presets[i].echo = _echo;
+    bool _col80 = doc["col80"]; presets[i].col80 = _col80;
+    byte _connectionType = doc["connectionType"]; presets[i].connectionType = _connectionType;
+    int _ping_ms = doc["ping_ms"]; presets[i].ping_ms = _ping_ms;
+    String _protocol = doc["protocol"]; presets[i].protocol = _protocol == "null" ? "" : _protocol;
+  }
 }
 
 file.close();

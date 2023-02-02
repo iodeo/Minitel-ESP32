@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include "FS.h"
 #include "SPIFFS.h"
-
+#include <ArduinoJson.h>
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 
 #define MINITEL_PORT Serial2
@@ -356,19 +356,6 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prot. : "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
 
   displaySaveLoad();
-
-/*
-  minitel.moveCursorXY(16, 15);
-  minitel.attributs(DOUBLE_LARGEUR); minitel.attributs(CARACTERE_MAGENTA); // minitel.attributs(CLIGNOTEMENT);
-  minitel.print("PRESS");
-  minitel.moveCursorXY(16, 16);
-  minitel.attributs(DOUBLE_GRANDEUR);
-  minitel.print("SPACE");
-  minitel.moveCursorXY(10, 18);
-  minitel.attributs(DOUBLE_LARGEUR);
-  minitel.print("TO CONNECT");
-  minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); //minitel.attributs(FIXE);
-*/
 
   minitel.attributs(GRANDEUR_NORMALE);
   minitel.attributs(CARACTERE_JAUNE); 
@@ -725,6 +712,62 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       break;
   }
 }
+
+void writePresets() {
+  initFS();
+  File file = SPIFFS.open("/telnetpro-presets.cnf", FILE_WRITE);
+
+  for (int i=0; i<20; ++i) {
+    DynamicJsonDocument doc(1024);
+    doc["presetName"] = presets[i].presetName;
+    doc["url"] = presets[i].url;
+    doc["scroll"] = presets[i].scroll;
+    doc["echo"] = presets[i].echo;
+    doc["col80"] = presets[i].col80;
+    doc["connectionType"] = presets[i].connectionType;
+    doc["ping_ms"] = presets[i].ping_ms;
+    doc["protocol"] = presets[i].protocol;
+
+    if (serializeJson(doc, file) == 0) {
+      Serial.println(F("Failed to write to file"));
+    }
+  }
+  file.close();
+  SPIFFS.end();
+}
+
+void readPresets() {
+  initFS();
+  File file = SPIFFS.open("/telnetpro-presets.cnf", FILE_READ);
+  if (file) minitel.println("SIII"); else minitel.println("NOOOOO");
+  DynamicJsonDocument doc(1024);
+  for (int i=0; i<20; ++i) {
+    DeserializationError error = deserializeJson(doc, file);
+    if (error) {
+      presets[i].presetName = "";
+      presets[i].url = "";
+      presets[i].scroll = false;
+      presets[i].echo = false;
+      presets[i].col80 = false;
+      presets[i].connectionType = 0;
+      presets[i].ping_ms = 0;
+      presets[i].protocol = "";
+    } else {
+      String _presetName = doc["presetName"]; presets[i].presetName = _presetName == "null" ? "" : _presetName;
+      String _url = doc["url"]; presets[i].url = _url == "null" ? "" : _url;
+      bool _scroll = doc["scroll"]; presets[i].scroll = _scroll;
+      bool _echo = doc["echo"]; presets[i].echo = _echo;
+      bool _col80 = doc["col80"]; presets[i].col80 = _col80;
+      byte _connectionType = doc["connectionType"]; presets[i].connectionType = _connectionType;
+      int _ping_ms = doc["ping_ms"]; presets[i].ping_ms = _ping_ms;
+      String _protocol = doc["protocol"]; presets[i].protocol = _protocol == "null" ? "" : _protocol;
+    }
+  }
+  
+  file.close();
+  SPIFFS.end();
+}
+
 
 void reset() {
   char *pointer = NULL;
