@@ -155,7 +155,6 @@ void setup() {
         while (minitel.getKeyCode() == 0);
         connectionOk = false;
       }
-
       
     } else if (connectionType == 1) { // WEBSOCKET -----------------------------------------------------------------------------
       debugPrintf("ssl=%d, host=%s, port=%d, path=%s, protocol='%s'\n",ssl, host.c_str(), port, path.c_str(), protocol.c_str());
@@ -422,6 +421,10 @@ int setPrefs() {
         setParameter(10, 5, password, true, false);
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
+        if (url.length() <= 40-9) {
+          minitel.moveCursorXY(1, 8);
+          minitel.clearLineFromCursor();
+        }
       } else if (key == '4') {
         switchParameter(12, 9, scroll);
       } else if (key == '5') {
@@ -816,7 +819,6 @@ void writePresets() {
 void readPresets() {
   initFS();
   File file = SPIFFS.open("/telnetpro-presets.cnf", FILE_READ);
-  if (file) minitel.println("SIII"); else minitel.println("NOOOOO");
   DynamicJsonDocument doc(1024);
   for (int i=0; i<20; ++i) {
     DeserializationError error = deserializeJson(doc, file);
