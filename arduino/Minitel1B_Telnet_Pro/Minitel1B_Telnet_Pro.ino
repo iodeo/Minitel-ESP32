@@ -47,36 +47,19 @@ String protocol("");
 byte connectionType = 0; // 0=Telnet 1=Websocket
 bool ssl = false;
 
-/****** TELETEL ------ connecté le 9 déc 2021
-  String host = "home.teletel.org";
-  uint16_t port = 9000;
-  bool col80 = false; // mode mixte
-  bool scroll = false; // mode rouleau
-  bool echo = false; // local echo
-  /**/
+typedef struct {
+  String presetName = "";
+  
+  String url = "";
+  bool scroll = false;
+  bool echo = false;
+  bool col80 = false;
+  byte connectionType = 0;
+  int ping_ms = 0;
+  String protocol = "";
+} Preset;
 
-/*
-  String host = "bbs.retrocampus.com";
-  uint16_t port = 6503; // Apple-1 without echo
-  //const char* host = "172.16.100.210";
-  //
-  bool col80 = false; // mode mixte
-  bool scroll = true; // mode rouleau
-  bool echo = false; // local echo
-*/
-
-
-/****** GLASSTTY - TELSTAR ------ connecté le 22 juin 2022
-  // https://glasstty.com/using-minitel-terminals-with-telstar/
-  // changer les bauds à 1200 bauds (lignes 64 & 65),
-  // appuyer CONNEXIONFIN pour que le minitel soit détecté
-  // puis faire *# pour recharger la page
-  String host = "glasstty.com";
-  uint16_t port = 6502; //
-  bool col80 = false; // mode mixte
-  bool scroll = false; // mode rouleau
-  bool echo = false; // local echo
-  /**/
+Preset presets[20];
 
 void initFS() {
   boolean ok = SPIFFS.begin();
@@ -170,15 +153,16 @@ void setup() {
 
       
     } else if (connectionType == 1) { // WEBSOCKET -----------------------------------------------------------------------------
-      delay(100);
-      if (protocol[0] == '\0') {
-        if (ssl) webSocket.beginSSL(host, port, path);
-        else webSocket.begin(host, port, path);
+      debugPrintf("ssl=%d, host=%s, port=%d, path=%s, protocol='%s'\n",ssl, host.c_str(), port, path.c_str(), protocol.c_str());
+      
+      if (protocol == "") {
+        if (ssl) webSocket.beginSSL(host.c_str(), port, path.c_str());
+        else webSocket.begin(host.c_str(), port, path.c_str());
       }
       else {
         debugPrintf("  - subprotocol added\n");
-        if (ssl) webSocket.beginSSL(host, port, path, protocol);
-        else webSocket.begin(host, port, path, protocol);
+        if (ssl) webSocket.beginSSL(host.c_str(), port, path.c_str(), protocol.c_str());
+        else webSocket.begin(host.c_str(), port, path.c_str(), protocol.c_str());
       }
       
       webSocket.onEvent(webSocketEvent);
@@ -620,7 +604,7 @@ void separateUrl(String url) {
   }
 
   int colon = url.indexOf(':');
-  int slash = url.indexOf('/', colon);
+  int slash = url.indexOf('/');
 
   if (slash == -1 && colon == -1) {
     host = url;
@@ -633,7 +617,7 @@ void separateUrl(String url) {
   } else if (slash != -1 && colon == -1) {
     host = url.substring(0, slash);
     port = 0;
-    path = url.substring(slash+1);
+    path = url.substring(slash);
   } else if (slash != -1 && colon != -1) {
     host = url.substring(0, colon);
     port = url.substring(colon+1, slash).toInt();
@@ -644,7 +628,7 @@ void separateUrl(String url) {
     if (connectionType == 0) {
       port = 23;
     } else if (connectionType == 1) {
-      port = 80;
+      port = ssl ? 443 : 80;
     } else if (connectionType == 2) {
       port = 22;
     }
