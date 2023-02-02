@@ -453,27 +453,62 @@ int setPrefs() {
 }
 
 void savePresets() {
-  displayPresets();
-  while (minitel.getKeyCode() == 0);
+  uint32_t key;
+  displayPresets("Save to slot");
+  do { 
+    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("    Choose slot, ESC or INDEX to go back");
+    while ((key = minitel.getKeyCode()) == 0);
+    if (key == 27 || key == 4933 || key == 4934) {
+      break;
+    } else if (key == 18) { // CTRL+R = RESET
+      reset();
+    } else if ( (key|32) >= 'a' && (key|32) <= 'a'+20-1) {
+      int slot = (key|32) - 'a';
+      debugPrintf("slot = %d\n", slot);
+      minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("      Name your slot, ESC to cancel"); minitel.clearLineFromCursor();
+      String presetName(presets[slot].presetName);
+      int exitCode = setParameter(3, 4+slot, presetName, false, true);
+      if (exitCode) continue;
+      if (presetName == "") {
+        minitel.attributs(CARACTERE_CYAN);
+        minitel.moveCursorXY(3, 4+slot); minitel.print(presets[slot].presetName);
+        continue;
+      }
+      // save preset
+      presets[slot].presetName = presetName;
+      presets[slot].url = url;
+      presets[slot].scroll = scroll;
+      presets[slot].echo = echo;
+      presets[slot].col80 = col80;
+      presets[slot].connectionType = connectionType;
+      presets[slot].ping_ms = ping_ms;
+      presets[slot].protocol = protocol;
+      writePresets();
+    }
+  } while (true);
   minitel.clearScreen();
-  showPrefs();  
-
+  showPrefs();
 }
 
 void loadPresets() {
-  displayPresets();
+  displayPresets("Load from slot");
   while (minitel.getKeyCode() == 0);
   minitel.clearScreen();
   showPrefs();  
 
 }
 
-void displayPresets() {
+void displayPresets(String title) {
+  static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   minitel.clearScreen();
+  minitel.moveCursorXY(1,1);
+  minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_CYAN); minitel.println(title); minitel.attributs(GRANDEUR_NORMALE);
+  minitel.moveCursorXY(1,4);
   for (int i=0; i<20; ++i) {
-    if (i<10) minitel.print(" ");
-    minitel.print(String(i));
-    minitel.print(" ");
+    minitel.attributs(CARACTERE_BLANC);
+    minitel.printChar(alphabet[i]);
+    minitel.print(":");
+    minitel.attributs(CARACTERE_CYAN);
     minitel.println(presets[i].presetName);
   }
 }
@@ -488,7 +523,7 @@ void switchParameter(int x, int y, bool &destination) {
   minitel.moveCursorXY(x, y); writeBool(destination);
 }
 
-void setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
+int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
   minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
   Serial.printf("************ %d ***********\n", 41 - x - destination.length());
@@ -519,6 +554,7 @@ void setParameter(int x, int y, String &destination, bool mask, bool allowBlank)
       printStringValue(destination);
   }
   minitel.clearLineFromCursor();
+  return exitCode;
 }
 
 void setIntParameter(int x, int y, uint16_t &destination) {
