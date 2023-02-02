@@ -492,7 +492,7 @@ void savePresets() {
 
 void loadPresets() {
   uint32_t key;
-  displayPresets("Load to slot");
+  displayPresets("Load from slot");
   do { 
     minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("    Choose slot, ESC or INDEX to go back");
     while ((key = minitel.getKeyCode()) == 0);
