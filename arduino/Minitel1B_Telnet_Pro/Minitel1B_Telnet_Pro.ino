@@ -506,6 +506,11 @@ void loadPresets() {
       if (presets[slot].presetName == "") {
         continue;
       }
+
+      minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
+      minitel.moveCursorXY(3, 4+slot); minitel.print(presets[slot].presetName);
+      delay(500);
+
       url = presets[slot].url;
       scroll = presets[slot].scroll;
       echo = presets[slot].echo;
@@ -513,6 +518,10 @@ void loadPresets() {
       connectionType = presets[slot].connectionType;
       ping_ms = presets[slot].ping_ms;
       protocol = presets[slot].protocol;
+
+      minitel.attributs(CARACTERE_CYAN); minitel.attributs(FOND_NORMAL);
+      minitel.moveCursorXY(3, 4+slot); minitel.print(presets[slot].presetName);
+
       break;
     }
   } while (true);
