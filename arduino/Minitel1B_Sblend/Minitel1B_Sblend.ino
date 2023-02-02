@@ -36,7 +36,26 @@
 #include <Minitel1B_Hard.h>
 #include "FS.h"
 #include "SPIFFS.h"
+#include <ArduinoJson.h>
+
 #define FORMAT_SPIFFS_IF_FAILED true
+
+
+
+#define DEBUG true
+#define DEBUG_PORT Serial
+
+#if DEBUG // Debug enabled
+#define debugBegin(x)     DEBUG_PORT.begin(x)
+#define debugPrint(x)     DEBUG_PORT.print(x)
+#define debugPrintln(x)   DEBUG_PORT.println(x)
+#define debugPrintf(...)    DEBUG_PORT.printf(__VA_ARGS__)
+#else // Debug disabled : Empty macro functions
+#define debugBegin(x)
+#define debugPrint(x)
+#define debugPrintln(x)
+#define debugPrintf(...)
+#endif
 
 Minitel minitel(Serial2);  // Le port utilisé sur ESP32
 
@@ -52,12 +71,26 @@ void setup() {
   minitel.echo(false);
   minitel.extendedKeyboard(); // activation des touches curseurs
 
-  if(!SPIFFS.begin()){
-      Serial.println("SPIFFS Mount Failed");
-      SPIFFS.format();
-      SPIFFS.begin();
-   }
-  SPIFFS.end();
+}
+
+
+void initFS() {
+  boolean ok = SPIFFS.begin();
+  if (!ok)
+  {
+    ok = SPIFFS.format();
+    if (ok) SPIFFS.begin();
+  }
+  if (!ok)
+  {
+    debugPrintf("%% Aborting now. Problem initializing Filesystem. System HALTED\n");
+    minitel.println("System HALTED.");
+    minitel.println("problem initializing filesystem");
+    while (1) delay(5000);
+  }
+  debugPrintf(
+    "%% Mounted SPIFFS used=%d total=%d\r\n", SPIFFS.usedBytes(),
+    SPIFFS.totalBytes());
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -75,61 +108,91 @@ void loop() {
 }
 
 
+typedef struct {
+  String presetName = "";
+  
+  String url = "";
+  bool scroll = false;
+  bool echo = false;
+  bool col80 = false;
+  byte connectionType = 0;
+  int ping_ms = 0;
+  String protocol = "";
+} Preset;
+
+Preset presets[20];
+
+
 void mainFunction() {
-  SPIFFS.begin();
-  File f = SPIFFS.open("/test.txt", FILE_WRITE);
-//  customVar.vars.nome = "Prancesco";
-//  customVar.vars.numero = 912;
-//  f.write(customVar.bytes, sizeof(customVar));
-  f.close();
-  SPIFFS.end();
   String baudStr = String(minitel.searchSpeed());
   minitel.newScreen();
   minitel.textMode();
-
-
-
-
-
-
-
-
-  bool websocket = true;
-
-  //String url="wss://ciao.it:8080/path";
-  String url="wsS://mntl.joHer.com:2018/?eCho";
-  bool ssl;
-  String host;
-  uint32_t port;
-  String path;
-
-  separateUrl(url, host, port, ssl, path);
   
+/*
+
+  initFS();
+  File file = SPIFFS.open("/test.txt", FILE_WRITE);
+
+  for (int i=0; i<20; ++i) {
+    presets[i].presetName = "Preset n." + String(i+1);
+    presets[i].url = "ws://hostnumber" + String(i+1) + ".com/?echo";
+    presets[i].connectionType = i;
+    presets[i].ping_ms = i*100;
+  }
+
+  for (int i=0; i<20; ++i) {
+    DynamicJsonDocument doc(1024);
+    doc["presetName"] = presets[i].presetName;
+    doc["url"] = presets[i].url;
+    doc["scroll"] = presets[i].scroll;
+    doc["echo"] = presets[i].echo;
+    doc["col80"] = presets[i].col80;
+    doc["connectionType"] = presets[i].connectionType;
+    doc["ping_ms"] = presets[i].ping_ms;
+    doc["protocol"] = presets[i].protocol;
+
+    if (serializeJson(doc, file) == 0) {
+      Serial.println(F("Failed to write to file"));
+    }
+
+  
+  }
+
+  file.close();
+  SPIFFS.end();
 
 
-  Serial.println("************************");
-  Serial.println();
-  Serial.println();
-  Serial.println();
-  Serial.println();
-  Serial.print("Port: ");
-  Serial.println(port);
-  Serial.print("SSL: ");
-  Serial.println(ssl ? "si" : "no");
-  Serial.print("Hostname: ");
-  Serial.println(host);
-  Serial.print("Path: ");
-  Serial.println(path);
-  Serial.println();
-  Serial.println();
-  Serial.println();
-  Serial.println();
-  Serial.println("************************");
+*/
 
 
 
+/*
+  initFS();
+listDir(SPIFFS, "/", 1);
+readFile(SPIFFS, "/test.txt");
 
 
+  SPIFFS.end();
+
+minitel.println("Fatto 2.");
+*/
+
+
+initFS();
+File file = SPIFFS.open("/test.txt", FILE_READ);
+
+DynamicJsonDocument doc(1024);
+for (int i=0; i<20; ++i) {
+  DeserializationError error = deserializeJson(&doc, file);
+  minitel.print("URL = ");
+  String url = doc["url"];
+  minitel.println(url);
+}
+
+file.close();
+SPIFFS.end();
+
+  
 
 
 

@@ -125,7 +125,7 @@ void setup() {
         minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
         WiFi.disconnect();
-        ESP.restart();
+        reset();
       }
     }
     debugPrintln();
@@ -235,7 +235,7 @@ void loopTelnet() {
       minitel.moveCursorXY(1, 1);
       minitel.echo(true);
       minitel.pageMode();
-      ESP.restart();
+      reset();
     }
     telnet.write((uint8_t) tmp);
     debugPrintf("[keyboard] %x\n", tmp);
@@ -277,7 +277,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.moveCursorXY(1, 1);
         minitel.echo(true);
         minitel.pageMode();
-        ESP.restart();
+        reset();
       } else if (key == 4933) { // ANNUL
         minitel.noCursor();
         for (int i=0; i<out.length(); ++i) {
@@ -428,7 +428,7 @@ int setPrefs() {
         minitel.moveCursorXY(1, 1);
         minitel.echo(true);
         minitel.pageMode();
-        ESP.restart();
+        reset();
       } else if (key == '1') {
         setParameter(10, 4, ssid, false, false);
       } else if (key == '2') {
@@ -651,7 +651,7 @@ void loopWebsocket() {
       minitel.moveCursorXY(1, 1);
       minitel.echo(true);
       minitel.pageMode();
-      ESP.restart();
+      reset();
     }
     debugPrintf("[KB] got code: %X\n", key);
     // prepare data to send over websocket
@@ -670,12 +670,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
   switch(type) {
     case WStype_DISCONNECTED:
       debugPrintf("[WS] Disconnected!\n");
+/*
       minitel.println();
       minitel.println("DISCONNECTING...");
       delay(3000);
       webSocket.disconnect();
       WiFi.disconnect();
-      ESP.restart();
+      reset();
+*/
       break;
       
     case WStype_CONNECTED:
@@ -722,4 +724,9 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       debugPrintf("[WS] WStype_FRAGMENT_FIN\n");
       break;
   }
+}
+
+void reset() {
+  char *pointer = NULL;
+  *pointer = 1;
 }

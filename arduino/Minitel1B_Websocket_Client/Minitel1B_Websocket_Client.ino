@@ -51,7 +51,7 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
-//****** 3615  -----------------  connecté le 2 mar 2022
+/****** 3615  -----------------  connecté le 2 mar 2022
 // wss://3615co.de/ws
 char* host = "3615co.de";
 int port = 80;
@@ -61,7 +61,7 @@ int ping_ms = 0;
 char* protocol = "";
 /**/
 
-/****** AE  -------------------  connecté le 2 mar 2022
+//****** AE  -------------------  connecté le 2 mar 2022
 // ws://3611.re/ws
 // websocket payload length of 0
 char* host = "3611.re";
