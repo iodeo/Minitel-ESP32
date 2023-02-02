@@ -106,6 +106,9 @@ void setup() {
     loadPrefs();
     debugPrintln("Prefs loaded");
 
+    readPresets();
+    debugPrintln("Presets loaded");
+
     minitel.clearScreen();
     showPrefs();
     setPrefs();
@@ -355,19 +358,6 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("PingMS: "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(ping_ms)); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prot. : "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
 
-  displaySaveLoad();
-
-  minitel.attributs(GRANDEUR_NORMALE);
-  minitel.attributs(CARACTERE_JAUNE); 
-  minitel.moveCursorXY(1,22);
-  minitel.attributs(INVERSION_FOND); minitel.print(" SPACE "); minitel.attributs(FOND_NORMAL); minitel.print(" to connect   ");
-  minitel.attributs(INVERSION_FOND); minitel.print(" CTRL+R "); minitel.attributs(FOND_NORMAL); minitel.print(" to restart");
-
-  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
-  minitel.attributs(CARACTERE_BLANC);
-}
-
-void displaySaveLoad() {
   minitel.moveCursorXY(2,18); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
   minitel.moveCursorXY(6,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
   minitel.rect(1,17,4,20);
@@ -377,6 +367,14 @@ void displaySaveLoad() {
   minitel.moveCursorXY(6+delta,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
   minitel.rect(1+delta,17,4+delta,20);
 
+  minitel.attributs(GRANDEUR_NORMALE);
+  minitel.attributs(CARACTERE_JAUNE); 
+  minitel.moveCursorXY(1,22);
+  minitel.attributs(INVERSION_FOND); minitel.print(" SPACE "); minitel.attributs(FOND_NORMAL); minitel.print(" to connect   ");
+  minitel.attributs(INVERSION_FOND); minitel.print(" CTRL+R "); minitel.attributs(FOND_NORMAL); minitel.print(" to restart");
+
+  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
+  minitel.attributs(CARACTERE_BLANC);
 }
 
 void printPassword() {
@@ -437,7 +435,9 @@ int setPrefs() {
       } else if (key == '9') {
         setParameter(12, 15, protocol, false, true);
       } else if (key == 's' || key == 'S') {
-        savePreset();
+        savePresets();
+      } else if (key == 'l' || key == 'L') {
+        loadPresets();
       } else {
         valid = false;
       }
@@ -452,22 +452,30 @@ int setPrefs() {
   return 0;
 }
 
-void savePreset() {
-  String presetName("");
-  for (int i=17; i<=20; ++i) {
-    minitel.moveCursorXY(1,i);
-    minitel.clearLineFromCursor();
-  }
-  minitel.moveCursorXY(1,18); minitel.attributs(CARACTERE_BLANC); minitel.println("Save preset with name:");
-  setParameter(1, 19, presetName, false, true);
+void savePresets() {
+  displayPresets();
+  while (minitel.getKeyCode() == 0);
+  minitel.clearScreen();
+  showPrefs();  
 
-  // TODO: SAVE PRESET
+}
 
-  for (int i=17; i<=20; ++i) {
-    minitel.moveCursorXY(1,i);
-    minitel.clearLineFromCursor();
+void loadPresets() {
+  displayPresets();
+  while (minitel.getKeyCode() == 0);
+  minitel.clearScreen();
+  showPrefs();  
+
+}
+
+void displayPresets() {
+  minitel.clearScreen();
+  for (int i=0; i<20; ++i) {
+    if (i<10) minitel.print(" ");
+    minitel.print(String(i));
+    minitel.print(" ");
+    minitel.println(presets[i].presetName);
   }
-  displaySaveLoad();
 }
 
 void cycleConnectionType() {
