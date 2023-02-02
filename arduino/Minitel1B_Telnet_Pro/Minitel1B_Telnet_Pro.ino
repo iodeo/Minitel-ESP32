@@ -119,6 +119,8 @@ void setup() {
 
     // WiFi connection
     debugPrintf("\nWiFi Connecting to %s ", ssid.c_str());
+    WiFi.disconnect();
+    delay(100);
     WiFi.begin(ssid.c_str(), password.c_str());
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
