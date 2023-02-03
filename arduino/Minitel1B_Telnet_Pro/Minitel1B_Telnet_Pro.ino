@@ -728,7 +728,7 @@ void loopWebsocket() {
       payload[3-len] = uint8_t(key);
       key = key >> 8;
     }
-    webSocket.sendBIN(payload+4-len, len);
+    webSocket.sendTXT(payload+4-len, len);
   }
 
 }
