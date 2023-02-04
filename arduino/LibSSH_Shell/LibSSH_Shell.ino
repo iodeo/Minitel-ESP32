@@ -12,8 +12,8 @@
 
 
 // Set local WiFi credentials below.
-const char *configSTASSID = "FASTWEB-B2BEA9";
-const char *configSTAPSK = "EPKP6EW71E";
+const char *configSTASSID = "YOUR_WIFI_SSID";
+const char *configSTAPSK = "YOUR_WIFI_PASS";
 
 // Stack size needed to run SSH and the command parser.
 const unsigned int configSTACK = 51200;
@@ -680,12 +680,12 @@ void controlTask(void *pvParameter)
   printf(
     "%% Mounted SPIFFS used=%d total=%d\r\n", SPIFFS.usedBytes(),
     SPIFFS.totalBytes());
+
   wifiPhyConnected = false;
-//  WiFi.disconnect(true);
-//  WiFi.mode(WIFI_MODE_STA);
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_MODE_STA);
   gotIpAddr = false; gotIp6Addr = false;
   WiFi.begin(configSTASSID, configSTAPSK);
-printf("X2\n");
 
   TickType_t xStartTime;
   xStartTime = xTaskGetTickCount();
@@ -764,8 +764,6 @@ printf("X2\n");
   }
 }
 
-#define CONFIG_CONSOLE_UART_NUM 2 
-
 void setup()
 {
   devState = STATE_NEW;
@@ -776,7 +774,7 @@ void setup()
   
   uart_driver_install((uart_port_t)CONFIG_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0);
   uart_set_pin((uart_port_t)CONFIG_CONSOLE_UART_NUM, 17, 16, 14, 15);
-  uart_set_baudrate((uart_port_t)CONFIG_CONSOLE_UART_NUM, 9600);
+  uart_set_baudrate((uart_port_t)CONFIG_CONSOLE_UART_NUM, 4800);
   uart_set_word_length((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_DATA_7_BITS);
   uart_set_parity((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_PARITY_EVEN);
   uart_set_stop_bits((uart_port_t)CONFIG_CONSOLE_UART_NUM, UART_STOP_BITS_1);

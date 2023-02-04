@@ -23,15 +23,12 @@ Minitel minitel(MINITEL_PORT);
 WiFiClient telnet;
 
 // WiFi credentials
-//const char* ssid     = "TecnoScientia";
-//const char* password = "babylon5";
-
-const char* ssid     = "TIM-retroedicola";
-const char* password = "retroedicolaclub!1";
+const char* ssid     = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASS";
 
 // Telnet server
 
-/****** TELETEL ------ connecté le 9 déc 2021
+/****** TELETEL ------ connecté le 9 déc 2021 */
 const char* host = "home.teletel.org";
 uint16_t port = 9000;
 bool col80 = false; // mode mixte
@@ -39,28 +36,13 @@ bool scroll = false; // mode rouleau
 bool echo = false; // local echo
 /**/
 
-/*
+/****** RETROCAMPUS BBS ------ connecté le 9 déc 2021
 const char* host = "bbs.retrocampus.com";
-uint16_t port = 6503; // Apple-1 without echo
-//const char* host = "172.16.100.210";
-//
+uint16_t port = 6502; // Apple-1 without echo
 bool col80 = false; // mode mixte
 bool scroll = true; // mode rouleau
-bool echo = false; // local echo
-*/
-
-
-
-
-const char* host = "178.79.152.19";
-uint16_t port = 3614; // Apple-1 without echo
-bool col80 = false; // mode mixte
-bool scroll = false; // mode rouleau
-bool echo = false; // local echo
-
-
-
-
+bool echo = true; // local echo
+/**/
 
 /****** GLASSTTY - TELSTAR ------ connecté le 22 juin 2022
 // https://glasstty.com/using-minitel-terminals-with-telstar/
@@ -79,7 +61,7 @@ void setup() {
   debugBegin(115200);
   debugPrintln("----------------");
   debugPrintln("Debug ready");
-/*
+
   // Minitel setup
   if (minitel.searchSpeed() != 4800) {     // search speed
     if (minitel.changeSpeed(4800) < 0) {   // set to 4800 if different
@@ -87,7 +69,6 @@ void setup() {
     }
   }
   debugPrintln("Minitel baud set");
-*/ minitel.changeSpeed(1200);
 
   minitel.clearScreen();
   if (col80) minitel.modeMixte();
