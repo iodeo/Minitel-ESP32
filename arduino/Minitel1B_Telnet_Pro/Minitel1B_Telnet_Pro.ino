@@ -95,11 +95,12 @@ void setup() {
 
   bool connectionOk = true;
   do {
+    minitel.modeVideotex();
+    minitel.textMode();
+    minitel.moveCursorXY(1,1);
     minitel.extendedKeyboard();
     minitel.textMode();
     minitel.clearScreen();
-    minitel.modeVideotex();
-    minitel.textMode();
     minitel.echo(false);
     minitel.pageMode();
 
@@ -126,8 +127,8 @@ void setup() {
       debugPrint(".");
       unsigned long key = minitel.getKeyCode();
       if (key == 18) { // CTRL+R = RESET
-        minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
+        minitel.clearScreen();
         WiFi.disconnect();
         reset();
       }
@@ -186,6 +187,7 @@ void setup() {
   } while (!connectionOk);
 
   minitel.textMode();
+  minitel.moveCursorXY(1,1);
   minitel.clearScreen();
 
   // Set 40 or 80 columns
@@ -206,8 +208,8 @@ void setup() {
     minitel.pageMode();
   }
 
-  minitel.clearScreen();
   minitel.moveCursorXY(1, 1);
+  minitel.clearScreen();
 
   debugPrintln("Minitel initialized");
 
@@ -234,8 +236,8 @@ void loopTelnet() {
       telnet.stop();
       WiFi.disconnect();
       minitel.modeVideotex();
-      minitel.clearScreen();
       minitel.moveCursorXY(1, 1);
+      minitel.clearScreen();
       minitel.echo(true);
       minitel.pageMode();
       reset();
@@ -276,8 +278,8 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.cursor();
       } else if (key == 18) { // CTRL+R = RESET
         minitel.modeVideotex();
-        minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
+        minitel.clearScreen();
         minitel.echo(true);
         minitel.pageMode();
         reset();
@@ -337,13 +339,14 @@ void savePrefs() {
 }
 
 void showPrefs() {
-  minitel.clearScreen();
-  minitel.capitalMode();
   minitel.textMode(); minitel.noCursor();
+  minitel.capitalMode();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
+  minitel.clearScreen();
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
+  minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
   minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
   minitel.moveCursorXY(1,4);
@@ -411,8 +414,8 @@ int setPrefs() {
       if (key == 18) { // CTRL+R = RESET
         valid = false;
         minitel.modeVideotex();
-        minitel.clearScreen();
         minitel.moveCursorXY(1, 1);
+        minitel.clearScreen();
         minitel.echo(true);
         minitel.pageMode();
         reset();
@@ -453,8 +456,8 @@ int setPrefs() {
     }
     key = minitel.getKeyCode();
   }
-  minitel.clearScreen();
   minitel.moveCursorXY(1, 1);
+  minitel.clearScreen();
   return 0;
 }
 
@@ -537,8 +540,8 @@ void loadPresets() {
 
 void displayPresets(String title) {
   static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  minitel.clearScreen();
   minitel.moveCursorXY(1,1);
+  minitel.clearScreen();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_CYAN); minitel.println(title); minitel.attributs(GRANDEUR_NORMALE);
   minitel.moveCursorXY(1,4);
   for (int i=0; i<20; ++i) {
@@ -715,8 +718,8 @@ void loopWebsocket() {
       webSocket.disconnect();
       WiFi.disconnect();
       minitel.modeVideotex();
-      minitel.clearScreen();
       minitel.moveCursorXY(1, 1);
+      minitel.clearScreen();
       minitel.echo(true);
       minitel.pageMode();
       reset();
