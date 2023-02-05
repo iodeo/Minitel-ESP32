@@ -109,7 +109,6 @@ void setup() {
     readPresets();
     debugPrintln("Presets loaded");
 
-    minitel.clearScreen();
     showPrefs();
     setPrefs();
   
@@ -338,6 +337,8 @@ void savePrefs() {
 }
 
 void showPrefs() {
+  minitel.clearScreen();
+  minitel.capitalMode();
   minitel.textMode(); minitel.noCursor();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
@@ -461,7 +462,8 @@ void savePresets() {
   uint32_t key;
   displayPresets("Save to slot");
   do { 
-    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("    Choose slot, ESC or INDEX to go back");
+    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("  Choose slot, ESC or SUMMARY to go back");
+    minitel.smallMode();
     while ((key = minitel.getKeyCode()) == 0);
     if (key == 27 || key == 4933 || key == 4934) {
       break;
@@ -491,7 +493,6 @@ void savePresets() {
       writePresets();
     }
   } while (true);
-  minitel.clearScreen();
   showPrefs();
 }
 
@@ -499,7 +500,8 @@ void loadPresets() {
   uint32_t key;
   displayPresets("Load from slot");
   do { 
-    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("    Choose slot, ESC or INDEX to go back");
+    minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_VERT); minitel.print("  Choose slot, ESC or SUMMARY to go back");
+    minitel.smallMode();
     while ((key = minitel.getKeyCode()) == 0);
     if (key == 27 || key == 4933 || key == 4934) {
       break;
@@ -530,7 +532,6 @@ void loadPresets() {
       break;
     }
   } while (true);
-  minitel.clearScreen();
   showPrefs();
 }
 

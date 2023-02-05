@@ -8,10 +8,11 @@ Where name is starting by "Minitel1B", the following lib must be added:
 
 https://github.com/eserandour/Minitel1B_Hard
 
-*Minitel1B_Websocket_Client** and *Minitel1B_Telnet_Pro** require this additional lib:
+**Minitel1B_Websocket_Client** and **Minitel1B_Telnet_Pro** require this additional lib:
 
 https://github.com/Links2004/arduinoWebSockets.git
 
-*Minitel1B_SSH_Client** require this additional lib:
+**Minitel1B_SSH_Client** require this additional lib:
 
 https://github.com/ewpa/LibSSH-ESP32.git
+
