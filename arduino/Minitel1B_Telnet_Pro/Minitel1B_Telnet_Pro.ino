@@ -339,8 +339,8 @@ void savePrefs() {
 }
 
 void showPrefs() {
-  minitel.capitalMode();
   minitel.textMode(); minitel.noCursor();
+  minitel.capitalMode();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
   minitel.clearScreen();
