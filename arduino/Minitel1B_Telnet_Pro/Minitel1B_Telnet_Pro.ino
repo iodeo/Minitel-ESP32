@@ -95,12 +95,12 @@ void setup() {
 
   bool connectionOk = true;
   do {
+    minitel.modeVideotex();
+    minitel.textMode();
     minitel.moveCursorXY(1,1);
     minitel.extendedKeyboard();
     minitel.textMode();
     minitel.clearScreen();
-    minitel.modeVideotex();
-    minitel.textMode();
     minitel.echo(false);
     minitel.pageMode();
 
@@ -346,6 +346,7 @@ void showPrefs() {
   minitel.clearScreen();
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
+  minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
   minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
   minitel.moveCursorXY(1,4);
