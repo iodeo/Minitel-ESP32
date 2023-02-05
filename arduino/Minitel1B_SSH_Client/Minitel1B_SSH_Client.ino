@@ -36,15 +36,15 @@
 // ---------------------------------------
 // ------ WiFi credentials
 
-const char* ssid     = "SFR_8B60";        // your wifi network
-const char* password = "henriouf-dionnet@coucy.MQ";    // your wifi password
+const char* ssid     = "yourSsid";        // your wifi network
+const char* password = "yourPassword";    // your wifi password
 
 // ---------------------------------------
 // ------ SSH session config.
 
-const char* ssh_host     = "192.168.1.51"; // host ip adress (e.g. "192.168.0.1")
-const char* ssh_username = "kiwi";         // user name (e.g. "pi")
-const char* ssh_password = "kiwi.netAC3";  // user password (e.g. "raspberrypi")
+const char* ssh_host     = "yourHostIP";   // host ip adress (e.g. "192.168.0.1")
+const char* ssh_username = "yourUsername"; // user name (e.g. "pi")
+const char* ssh_password = "yourPassword"; // user password (e.g. "raspberrypi")
 
 //WiFiClient client
 Minitel minitel(MINITEL_PORT);
