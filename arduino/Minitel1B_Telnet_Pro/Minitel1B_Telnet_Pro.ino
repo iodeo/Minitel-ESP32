@@ -337,11 +337,11 @@ void savePrefs() {
 }
 
 void showPrefs() {
-  minitel.clearScreen();
   minitel.capitalMode();
   minitel.textMode(); minitel.noCursor();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
+  minitel.clearScreen();
   minitel.moveCursorXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
