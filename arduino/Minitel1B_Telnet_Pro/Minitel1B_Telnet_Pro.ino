@@ -86,12 +86,16 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
+  /*
   if (minitel.searchSpeed() != 4800) {     // search speed
     if (minitel.changeSpeed(4800) < 0) {   // set to 4800 if different
       minitel.searchSpeed();               // search speed again if change has failed
     }
   }
-  debugPrintln("Minitel baud set");
+  */
+  int speed = minitel.searchSpeed();
+  minitel.changeSpeed(speed);
+  debugPrintf("Minitel baud set to %d\n", speed);
 
   bool connectionOk = true;
   do {
@@ -115,6 +119,7 @@ void setup() {
   
     separateUrl(url);
 
+    minitel.capitalMode();
     minitel.println("Connecting, please wait. CTRL+R to reset");
 
     // WiFi connection
@@ -340,7 +345,7 @@ void savePrefs() {
 
 void showPrefs() {
   minitel.textMode(); minitel.noCursor();
-  minitel.capitalMode();
+  minitel.smallMode();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.cancel(); minitel.moveCursorDown(1);
   minitel.clearScreen();
