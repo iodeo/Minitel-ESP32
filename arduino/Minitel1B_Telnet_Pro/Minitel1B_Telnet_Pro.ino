@@ -6,6 +6,8 @@
 #include <ArduinoJson.h>
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 
+#define MINITEL_BAUD_TRY  9600
+
 #define MINITEL_PORT Serial2
 
 #define DEBUG true
@@ -86,14 +88,13 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
-  /*
-  if (minitel.searchSpeed() != 4800) {     // search speed
-    if (minitel.changeSpeed(4800) < 0) {   // set to 4800 if different
-      minitel.searchSpeed();               // search speed again if change has failed
+  int speed = 0;
+  if ( (speed = minitel.searchSpeed()) != MINITEL_BAUD_TRY) {  // search speed
+    if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
+      speed = minitel.searchSpeed();                           // search speed again if change has failed
     }
   }
-  */
-  int speed = minitel.searchSpeed();
+
   minitel.changeSpeed(speed);
   debugPrintf("Minitel baud set to %d\n", speed);
 
