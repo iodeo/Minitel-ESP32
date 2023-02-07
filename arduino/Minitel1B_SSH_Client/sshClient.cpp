@@ -131,15 +131,15 @@ void SSHClient::close_channel() {
 int SSHClient::interactive_shell_session() {
     int ret;
 
-    ret = ssh_channel_request_pty(_channel);
+    ret = ssh_channel_request_pty_size(_channel, "vt100", 80, 24);
     if (ret != SSH_OK) {
         return ret;
     }
 
-    ret = ssh_channel_change_pty_size(_channel, 79, 24);
-    if (ret != SSH_OK) {
-        return ret;
-    }
+//    ret = ssh_channel_change_pty_size(_channel, 79, 24);
+//    if (ret != SSH_OK) {
+//        return ret;
+//    }
 
     ret = ssh_channel_request_shell(_channel);
     if (ret != SSH_OK) {
