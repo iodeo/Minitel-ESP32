@@ -29,6 +29,7 @@ class SSHClient {
     void end();
     bool available();
     int receive();
+    int flushReceiving();
     char readIndex(int index);
     int send(void *buffer, uint32_t len);
 
