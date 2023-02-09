@@ -156,10 +156,10 @@ void sshTask(void *pvParameters) {
     // we ignore received data to avoid this
     if (cancel) {
       debugPrintf(" > Intercepted ctrl+C\n", nbytes);
-      int nbyte = sshClient.flush();
+      int nbyte = sshClient.flushReceiving();
       minitel.println();minitel.println();
       minitel.println("\r\r * ctrl+C * ");
-      minitel.println("Warning: received data ignored because of it is too long to display");
+      minitel.println("Warning: received data ignored to avoid long diplaying time");
       minitel.print("number of bytes ignored : ");
       minitel.println(String(nbyte));
       // send CR to get new input line
@@ -172,8 +172,8 @@ void sshTask(void *pvParameters) {
   sshClient.end();
 
   // Self delete task
-  vTaskDelete(NULL);
   debugPrintf("\n> SSH task end\n");
+  vTaskDelete(NULL);
 }
 
 void loop() {
