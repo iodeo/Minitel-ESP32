@@ -4,20 +4,13 @@
 
 SSHClient::SSHClient() {}
 
-SSHClient::SSHStatus SSHClient::begin(const char* host, const char* username, const char* password) {
+bool SSHClient::begin(const char* host, const char* username, const char* password) {
     libssh_begin();
     SSHStatus status = start_session(host, username, password);
-    if (status == SSHStatus::OK) {
-        if (open_channel()) {
-            if (SSH_OK != interactive_shell_session()) {
-                status = SSHStatus::GENERAL_ERROR;
-            }
-        }
-        else {
-            status = SSHStatus::GENERAL_ERROR;
-        }
-    }
-    return status;
+    if (status != SSHStatus::OK) return false;
+    if (!open_channel()) return false;
+    if (SSH_OK != interactive_shell_session()) return false;
+    return true;
 }
 
 bool SSHClient::available() {
@@ -36,8 +29,10 @@ char SSHClient::readIndex(int index) {
   return _readBuffer[index];
 }
 
-void SSHClient::send(void *buffer, uint32_t len) {
-  ssh_channel_write(_channel, buffer, len);
+int SSHClient::send(void *buffer, uint32_t len) {
+  int rc = ssh_channel_write(_channel, buffer, len);
+  if (rc == SSH_ERROR) return -1;
+  return rc;
 }
 
 //bool SSHClient::poll(Minitel* minitel) {
