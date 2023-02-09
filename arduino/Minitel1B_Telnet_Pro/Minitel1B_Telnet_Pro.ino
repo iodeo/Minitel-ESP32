@@ -45,6 +45,8 @@ bool echo = false;
 bool col80 = false;
 int ping_ms = 0;
 String protocol("");
+String sshUser("");
+String sshPass("");
 
 byte connectionType = 0; // 0=Telnet 1=Websocket
 bool ssl = false;
@@ -59,6 +61,8 @@ typedef struct {
   byte connectionType = 0;
   int ping_ms = 0;
   String protocol = "";
+  String sshUser = "";
+  String sshPass = "";
 } Preset;
 
 Preset presets[20];
@@ -185,7 +189,8 @@ void setup() {
         // consider connection disconnected if pong is not received 2 times
         webSocket.enableHeartbeat(ping_ms, 3000, 2);
       }
-
+    } else if (connectionType == 2) { // SSH ---------------------------------------------------------------------------------------
+      // TODO-SSH
     }  // --------------------------------------------------------------------------------------------------------------------------
   
   
@@ -226,6 +231,8 @@ void loop() {
     loopTelnet();
   else if (connectionType == 1) // WEBSOCKET
     loopWebsocket();
+  else if (connectionType == 2) // SSH
+    loopSsh();
 }
 
 void loopTelnet() {
@@ -327,6 +334,8 @@ void loadPrefs() {
   connectionType = prefs.getUChar("connectionType", 0);
   ping_ms = prefs.getInt("ping_ms", 0);
   protocol = prefs.getString("protocol", "");
+  sshUser = prefs.getString("sshUser", "");
+  sshPass = prefs.getString("sshPass", "");
   prefs.end();
 }
 
@@ -341,6 +350,8 @@ void savePrefs() {
   if (prefs.getUChar("connectionType", 0) != connectionType) prefs.putUChar("connectionType", connectionType);
   if (prefs.getInt("ping_ms", 0) != ping_ms) prefs.putInt("ping_ms", ping_ms);
   if (prefs.getString("protocol", "") != protocol) prefs.putString("protocol", protocol);
+  if (prefs.getString("sshUser", "")  != sshUser)  prefs.putString("sshUser",  sshUser);
+  if (prefs.getString("sshPass", "")  != sshPass)  prefs.putString("sshPass",  sshPass);
   prefs.end();
 }
 
@@ -357,7 +368,7 @@ void showPrefs() {
   minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
   minitel.moveCursorXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(password); minitel.clearLineFromCursor(); minitel.println();
   minitel.moveCursorXY(1,7);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("3"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("URL: "); minitel.attributs(CARACTERE_CYAN); printStringValue(url); minitel.clearLineFromCursor(); minitel.println();
   minitel.moveCursorXY(1,9);
@@ -365,18 +376,21 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor(); minitel.println();
   minitel.moveCursorXY(1,13);
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Type  : "); writeConnectionType(connectionType); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("PingMS: "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(ping_ms)); minitel.clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prot. : "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("7"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Type    : "); writeConnectionType(connectionType); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("8"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("PingMS  : "); minitel.attributs(CARACTERE_CYAN); minitel.print(String(ping_ms)); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Subprot.: "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); minitel.clearLineFromCursor(); minitel.println();
+  minitel.moveCursorXY(1,16);
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("U"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH User: "); minitel.attributs(CARACTERE_CYAN); minitel.print(sshUser); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("P"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH Pass: "); minitel.attributs(CARACTERE_CYAN); if (sshPass != NULL && sshPass != "") {printPassword(sshPass);} minitel.clearLineFromCursor(); minitel.println();
 
-  minitel.moveCursorXY(2,18); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
-  minitel.moveCursorXY(6,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
-  minitel.rect(1,17,4,20);
+  minitel.moveCursorXY(2,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
+  minitel.moveCursorXY(6,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
+  minitel.rect(1,18,4,21);
 
   int delta=24;
-  minitel.moveCursorXY(2+delta,18); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("L");
-  minitel.moveCursorXY(6+delta,18); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
-  minitel.rect(1+delta,17,4+delta,20);
+  minitel.moveCursorXY(2+delta,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("L");
+  minitel.moveCursorXY(6+delta,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
+  minitel.rect(1+delta,18,4+delta,21);
 
   minitel.attributs(GRANDEUR_NORMALE);
   minitel.attributs(CARACTERE_JAUNE); 
@@ -388,7 +402,7 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC);
 }
 
-void printPassword() {
+void printPassword(String password) {
   if (password == NULL || password == "") {
     minitel.print("-undefined-");
   } else {
@@ -442,13 +456,17 @@ int setPrefs() {
       } else if (key == '6') {
         switchParameter(12, 11, col80);
       } else if (key == '7') {
-        cycleConnectionType();
+        cycleConnectionType(14,13);
       } else if (key == '8') {
         uint16_t temp = ping_ms;
-        setIntParameter(12, 14, temp);
+        setIntParameter(14, 14, temp);
         ping_ms = temp;
       } else if (key == '9') {
-        setParameter(12, 15, protocol, false, true);
+        setParameter(14, 15, protocol, false, true);
+      } else if (key == 'u' || key == 'U') {
+        setParameter(14, 16, sshUser, false, true);
+      } else if (key == 'p' || key == 'P') {
+        setParameter(14, 17, sshPass, true, true);
       } else if (key == 's' || key == 'S') {
         savePresets();
       } else if (key == 'l' || key == 'L') {
@@ -499,6 +517,8 @@ void savePresets() {
       presets[slot].connectionType = connectionType;
       presets[slot].ping_ms = ping_ms;
       presets[slot].protocol = protocol;
+      presets[slot].sshUser = sshUser;
+      presets[slot].sshPass = sshPass;
       writePresets();
     }
   } while (true);
@@ -534,6 +554,8 @@ void loadPresets() {
       connectionType = presets[slot].connectionType;
       ping_ms = presets[slot].ping_ms;
       protocol = presets[slot].protocol;
+      sshUser = presets[slot].sshUser;
+      sshPass = presets[slot].sshPass;
 
       minitel.attributs(CARACTERE_CYAN); minitel.attributs(FOND_NORMAL);
       minitel.moveCursorXY(3, 4+slot); minitel.print(presets[slot].presetName);
@@ -559,9 +581,9 @@ void displayPresets(String title) {
   }
 }
 
-void cycleConnectionType() {
-  connectionType = (connectionType + 1) % 2;
-  minitel.moveCursorXY(12,13); writeConnectionType(connectionType);
+void cycleConnectionType(int x, int y) {
+  connectionType = (connectionType + 1) % 3;
+  minitel.moveCursorXY(x,y); writeConnectionType(connectionType);
 }
 
 void switchParameter(int x, int y, bool &destination) {
@@ -644,7 +666,7 @@ void writeConnectionType(byte connectionType) {
     minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("Websocket");
-/*  
+   
   minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL); minitel.print("/");
 
   if (connectionType == 2) {
@@ -653,7 +675,6 @@ void writeConnectionType(byte connectionType) {
     minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("SSH");
-*/
 
   minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NORMAL);
 }
@@ -664,6 +685,8 @@ void separateUrl(String url) {
   String temp = String(url);
   temp.toLowerCase();
 
+  ssl = false;
+  
   if (temp.startsWith("wss://")) {
     ssl = true;
     url.remove(0, 6);
@@ -676,10 +699,12 @@ void separateUrl(String url) {
   } else if (temp.startsWith("ws:")) {
     ssl = false;
     url.remove(0, 3);
-  } else {
-    ssl = false;
+  } else if (temp.startsWith("ssh://")) {
+    url.remove(0, 6);
+  } else if (temp.startsWith("ssh:")) {
+    url.remove(0, 4);
   }
-
+  
   int colon = url.indexOf(':');
   int slash = url.indexOf('/');
 
@@ -710,6 +735,10 @@ void separateUrl(String url) {
       port = 22;
     }
   }
+}
+
+void loopSsh() {
+  // TODO-SSH
 }
 
 void loopWebsocket() {
@@ -817,6 +846,8 @@ void writePresets() {
     doc["connectionType"] = presets[i].connectionType;
     doc["ping_ms"] = presets[i].ping_ms;
     doc["protocol"] = presets[i].protocol;
+    doc["sshUser"] = presets[i].sshUser;
+    doc["sshPass"] = presets[i].sshPass;
 
     if (serializeJson(doc, file) == 0) {
       Serial.println(F("Failed to write to file"));
@@ -827,6 +858,7 @@ void writePresets() {
 }
 
 void readPresets() {
+  int countNonEmptySlots = 0;
   initFS();
   File file = SPIFFS.open("/telnetpro-presets.cnf", FILE_READ);
   DynamicJsonDocument doc(1024);
@@ -841,6 +873,8 @@ void readPresets() {
       presets[i].connectionType = 0;
       presets[i].ping_ms = 0;
       presets[i].protocol = "";
+      presets[i].sshUser = "";
+      presets[i].sshPass = "";
     } else {
       String _presetName = doc["presetName"]; presets[i].presetName = _presetName == "null" ? "" : _presetName;
       String _url = doc["url"]; presets[i].url = _url == "null" ? "" : _url;
@@ -850,7 +884,15 @@ void readPresets() {
       byte _connectionType = doc["connectionType"]; presets[i].connectionType = _connectionType;
       int _ping_ms = doc["ping_ms"]; presets[i].ping_ms = _ping_ms;
       String _protocol = doc["protocol"]; presets[i].protocol = _protocol == "null" ? "" : _protocol;
+      String _sshUser  = doc["sshUser"];  presets[i].sshUser  = _sshUser  == "null" ? "" : _sshUser;
+      String _sshPass  = doc["sshPass"];  presets[i].sshPass  = _sshPass  == "null" ? "" : _sshPass;
+
+      ++countNonEmptySlots;
     }
+  }
+
+  if (countNonEmptySlots == 0) { // DEFAULT PRESETS IF THERE IS NO PRESET
+    // TODO-DEFAULT-PRESETS
   }
   
   file.close();
