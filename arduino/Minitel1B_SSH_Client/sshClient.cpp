@@ -25,6 +25,22 @@ int SSHClient::receive() {
   return ssh_channel_read_nonblocking(_channel, _readBuffer, sizeof(_readBuffer), 0);
 }
 
+int SSHClient::flushReceiving() {
+  int nbyte;
+  int tbyte = 0;
+  uint8_t count = 0;
+  do {
+    nbyte = ssh_channel_read_nonblocking(_channel, _readBuffer, sizeof(_readBuffer), 0);
+    tbyte+=nbyte;
+    if (nbyte == 0) {
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+      count++;
+    }
+  }
+  while (count < 3);
+  return tbyte;
+}
+
 char SSHClient::readIndex(int index) {
   return _readBuffer[index];
 }
