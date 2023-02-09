@@ -18,7 +18,7 @@ class SSHClient {
         GENERAL_ERROR
     };
 
-    SSHStatus begin(const char *host, const char *user, const char *password);
+    bool begin(const char *host, const char *user, const char *password);
     SSHStatus connect_ssh(const char *host, const char *user, const char *password, const int verbosity);
 //    bool poll(Minitel* minitel);
     SSHStatus start_session(const char *host, const char *user, const char *password);
@@ -30,7 +30,7 @@ class SSHClient {
     bool available();
     int receive();
     char readIndex(int index);
-    void send(void *buffer, uint32_t len);
+    int send(void *buffer, uint32_t len);
 
     private:
     ssh_session _session;
