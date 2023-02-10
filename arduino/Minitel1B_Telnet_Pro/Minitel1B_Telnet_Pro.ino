@@ -5,6 +5,7 @@
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
+#include "sshClient.h"
 
 #define MINITEL_BAUD_TRY  9600
 
@@ -31,6 +32,8 @@ Minitel minitel(MINITEL_PORT);
 WiFiClient telnet;
 Preferences prefs;
 WebSocketsClient webSocket;
+SSHClient sshClient;
+TaskHandle_t sshTaskHandle;
 
 // WiFi credentials
 String ssid("");
@@ -48,7 +51,7 @@ String protocol("");
 String sshUser("");
 String sshPass("");
 
-byte connectionType = 0; // 0=Telnet 1=Websocket
+byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH
 bool ssl = false;
 
 typedef struct {
@@ -190,7 +193,11 @@ void setup() {
         webSocket.enableHeartbeat(ping_ms, 3000, 2);
       }
     } else if (connectionType == 2) { // SSH ---------------------------------------------------------------------------------------
-      // TODO-SSH
+      debugPrintf("\n> SSH task setup\n");
+      BaseType_t xReturned;
+      xReturned = xTaskCreatePinnedToCore(sshTask, "sshTask", 51200, NULL,
+        (configMAX_PRIORITIES - 1), &sshTaskHandle, ARDUINO_RUNNING_CORE);
+      if (xReturned!=pdPASS) debugPrintf("  > Failed to create task\n");
     }  // --------------------------------------------------------------------------------------------------------------------------
   
   
@@ -738,8 +745,109 @@ void separateUrl(String url) {
 }
 
 void loopSsh() {
-  // TODO-SSH
+  // do nothing while sshTask runs
+  if (eTaskGetState(sshTaskHandle)!=eDeleted) {
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+  } else {// reset otherwise
+    reset();
+  }
 }
+
+void sshTask(void *pvParameters) {
+  debugPrintf("\n> SSH task running\n");
+  
+  // Open ssh session
+  debugPrintf("  Connecting to %s as %s\n", host.c_str(), sshUser.c_str());
+  bool isOpen = sshClient.begin(host.c_str(), sshUser.c_str(), sshPass.c_str());
+  if (!isOpen) debugPrintf("  > SSH authentication failed\n");
+  
+  // Loop task
+  while (true) {
+    bool cancel = false;
+    // Check ssh channel
+    if (!sshClient.available()) {
+      debugPrintf("ssh channel lost\n");
+      break;
+    }
+
+    // host -> minitel
+    int nbytes = sshClient.receive();
+    if (nbytes < 0) {
+      debugPrintf("  > SSH Error while receiving\n");
+      break;
+    }
+    if (nbytes > 0) {
+      debugPrintf("[SSH] got %u bytes\n", nbytes);
+      int index = 0;
+      while (index < nbytes) {
+        char b = sshClient.readIndex(index++);
+        minitel.writeByte(b);
+      }
+    }
+
+    // minitel -> host
+    uint32_t key = minitel.getKeyCode(false);
+    if (key == 0) {
+      vTaskDelay(50/portTICK_PERIOD_MS);
+      continue;
+    }
+    debugPrintf("[KB] got code: %X\n", key);
+    switch (key) {
+      // redirect minitel special keys
+      case SOMMAIRE:   key = 0x07;   break; //BEL : ring
+      case GUIDE:      key = 0x07;   break; //BEL : ring
+      case ANNULATION: key = 0x0515; break; //ctrl+E ctrl+U : end of line + remove left
+      case CORRECTION: key = 0x7F;   break; //DEL : delete
+      case RETOUR:     key = 0x01;   break; //ctrl+A : beginning of line
+      case SUITE:      key = 0x05;   break; //ctrl+E : end of line
+      case REPETITION: key = 0x0C;   break; //ctrl+L : clear-screen (current command repeated)
+      case ENVOI:      key = 0x0D;   break; //CR : validate command
+      // intercept ctrl+c
+      case 0x03: cancel = true; break; 
+    }
+    // prepare data to send over ssh
+    uint8_t payload[4];
+    size_t len = 0;
+    for (len = 0; key != 0 && len < 4; len++) {
+      payload[3-len] = uint8_t(key);
+      key = key >> 8;
+    }
+    if (sshClient.send(payload+4-len, len) < 0) {
+      debugPrintf("  > SSH Error while sending\n");
+      break;
+    }
+    // Intercept CTRL+C:
+    // displaying data received before host get the command can take minutes
+    // we ignore received data to avoid this
+    if (cancel) {
+      debugPrintf(" > Intercepted ctrl+C\n");
+      int nbyte = sshClient.flushReceiving();
+      minitel.println();minitel.println();
+      minitel.println("\r\r * ctrl+C * ");
+      minitel.print("Warning: ");
+      minitel.print(String(nbyte));
+      minitel.println(" received bytes ignored ");
+      minitel.println("as it may takes minutes to display on minitel.");
+      // send CR to get new input line
+      uint8_t cr = 0x0D;
+      sshClient.send(&cr, 1);
+    }
+  }
+  // Closing session
+  debugPrintf(" >  Session closed\n");
+  sshClient.end();
+
+  // Reinit minitel and Self delete ssh task 
+  debugPrintf("\n> SSH task end\n");
+  WiFi.disconnect();
+  minitel.modeVideotex();
+  minitel.moveCursorXY(1, 1);
+  minitel.clearScreen();
+  minitel.echo(true);
+  minitel.pageMode();
+  vTaskDelete(NULL);
+}
+
 
 void loopWebsocket() {
 
