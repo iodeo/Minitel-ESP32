@@ -42,7 +42,7 @@ const char* password = "yourPassword";    // your wifi password
 // ---------------------------------------
 // ------ SSH session config.
 
-const char* ssh_host     = "yourHostIP";   // host ip adress (e.g. "192.168.0.1")
+const char* ssh_host     = "yourHost";   // host name or ip adress (e.g. "192.168.0.1")
 const char* ssh_username = "yourUsername"; // user name (e.g. "pi")
 const char* ssh_password = "yourPassword"; // user password (e.g. "raspberrypi")
 
@@ -155,7 +155,7 @@ void sshTask(void *pvParameters) {
     // displaying data received before host get the command can take minutes
     // we ignore received data to avoid this
     if (cancel) {
-      debugPrintf(" > Intercepted ctrl+C\n", nbytes);
+      debugPrintf(" > Intercepted ctrl+C\n");
       int nbyte = sshClient.flushReceiving();
       minitel.println();minitel.println();
       minitel.println("\r\r * ctrl+C * ");
