@@ -998,13 +998,91 @@ void readPresets() {
       ++countNonEmptySlots;
     }
   }
-
-  if (countNonEmptySlots == 0) { // DEFAULT PRESETS IF THERE IS NO PRESET
-    // TODO-DEFAULT-PRESETS
-  }
   
   file.close();
   SPIFFS.end();
+
+  if (countNonEmptySlots == 0) { // DEFAULT PRESETS IF THERE IS NO PRESET
+    presets[0].presetName = "Retrocampus BBS";
+    presets[0].url = "bbs.retrocampus.com:8051";
+    presets[0].scroll = true;
+    presets[0].echo = false;
+    presets[0].col80 = false;
+    presets[0].connectionType = 0; // Telnet
+    presets[0].ping_ms = 0;
+    presets[0].protocol = "";
+    presets[0].sshUser = "";
+    presets[0].sshPass = "";
+
+    presets[1].presetName = "3614 HACKER";
+    presets[1].url = "ws:mntl.joher.com:2018/?echo";
+    presets[1].scroll = false;
+    presets[1].echo = false;
+    presets[1].col80 = false;
+    presets[1].connectionType = 1; // Websocket
+    presets[1].ping_ms = 0;
+    presets[1].protocol = "";
+    presets[1].sshUser = "";
+    presets[1].sshPass = "";
+
+    presets[2].presetName = "3614 TEASER";
+    presets[2].url = "ws:minitel.3614teaser.fr:8080/ws";
+    presets[2].scroll = false;
+    presets[2].echo = false;
+    presets[2].col80 = false;
+    presets[2].connectionType = 1; // Websocket
+    presets[2].ping_ms = 10000;
+    presets[2].protocol = "tty";
+    presets[2].sshUser = "";
+    presets[2].sshPass = "";
+
+    presets[3].presetName = "3615 SM";
+    presets[3].url = "wss:wss.3615.live:9991/?echo";
+    presets[3].scroll = false;
+    presets[3].echo = false;
+    presets[3].col80 = false;
+    presets[3].connectionType = 1; // Websocket
+    presets[3].ping_ms = 0;
+    presets[3].protocol = "";
+    presets[3].sshUser = "";
+    presets[3].sshPass = "";
+
+    presets[4].presetName = "3611.re";
+    presets[4].url = "ws:3611.re/ws";
+    presets[4].scroll = false;
+    presets[4].echo = false;
+    presets[4].col80 = false;
+    presets[4].connectionType = 1; // Websocket
+    presets[4].ping_ms = 0;
+    presets[4].protocol = "";
+    presets[4].sshUser = "";
+    presets[4].sshPass = "";
+
+    presets[5].presetName = "3615co.de";
+    presets[5].url = "ws:3615co.de/ws";
+    presets[5].scroll = false;
+    presets[5].echo = false;
+    presets[5].col80 = false;
+    presets[5].connectionType = 1; // Websocket
+    presets[5].ping_ms = 0;
+    presets[5].protocol = "";
+    presets[5].sshUser = "";
+    presets[5].sshPass = "";
+
+    presets[6].presetName = "ssh example";
+    presets[6].url = "[host name or ip]";
+    presets[6].scroll = true;
+    presets[6].echo = false;
+    presets[6].col80 = true;
+    presets[6].connectionType = 2; // SSH
+    presets[6].ping_ms = 0;
+    presets[6].protocol = "";
+    presets[6].sshUser = "pi";
+    presets[6].sshPass = "raspberry";
+
+    writePresets();
+  }
+  
 }
 
 
