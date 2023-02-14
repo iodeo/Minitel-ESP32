@@ -1009,6 +1009,5 @@ void readPresets() {
 
 
 void reset() {
-  char *pointer = NULL;
-  *pointer = 1;
+  ESP.restart();
 }
