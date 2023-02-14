@@ -96,7 +96,7 @@ void setup() {
 
   // Minitel setup
   int speed = 0;
-  if ( (speed = minitel.searchSpeed()) != MINITEL_BAUD_TRY) {  // search speed
+  if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
     if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
       speed = minitel.searchSpeed();                           // search speed again if change has failed
     }
