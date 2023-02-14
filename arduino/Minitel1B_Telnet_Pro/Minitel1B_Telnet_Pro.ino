@@ -7,7 +7,7 @@
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 #include "sshClient.h"
 
-#define MINITEL_BAUD_TRY  9600
+#define MINITEL_BAUD_TRY  4800
 
 #define MINITEL_PORT Serial2
 
