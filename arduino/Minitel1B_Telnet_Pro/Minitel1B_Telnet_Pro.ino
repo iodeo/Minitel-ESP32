@@ -790,6 +790,8 @@ void sshTask(void *pvParameters) {
     if (key == 0) {
       vTaskDelay(50/portTICK_PERIOD_MS);
       continue;
+    } elseif (key == 18) { // CTRL+R = RESET
+      break;
     }
     debugPrintf("[KB] got code: %X\n", key);
     switch (key) {
