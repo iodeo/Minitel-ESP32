@@ -1006,7 +1006,7 @@ void readPresets() {
 
   if (countNonEmptySlots == 0) { // DEFAULT PRESETS IF THERE IS NO PRESET
     presets[0].presetName = "Retrocampus BBS";
-    presets[0].url = "bbs.retrocampus.com:8051";
+    presets[0].url = "bbs.retrocampus.com:1651";
     presets[0].scroll = true;
     presets[0].echo = false;
     presets[0].col80 = false;
