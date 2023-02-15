@@ -781,7 +781,14 @@ void sshTask(void *pvParameters) {
       int index = 0;
       while (index < nbytes) {
         char b = sshClient.readIndex(index++);
-        minitel.writeByte(b);
+        if (b <= DEL) minitel.writeByte(b); // print only code < 128
+        else { // replace char with one "?"
+          minitel.writeByte('?');
+          // increment index considering utf-8 encoding
+          if (b < 0b11100000) index+=1;
+          else if (b < 0b11110000) index+=2;
+          else index+=3;
+        }
       }
     }
 
@@ -790,7 +797,7 @@ void sshTask(void *pvParameters) {
     if (key == 0) {
       vTaskDelay(50/portTICK_PERIOD_MS);
       continue;
-    } elseif (key == 18) { // CTRL+R = RESET
+    } else if (key == 18) { // CTRL+R = RESET
       break;
     }
     debugPrintf("[KB] got code: %X\n", key);
