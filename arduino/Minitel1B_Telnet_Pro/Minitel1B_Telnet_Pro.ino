@@ -247,7 +247,7 @@ void loopTelnet() {
   if (telnet.available()) {
     int tmp = telnet.read();
     minitel.writeByte((byte) tmp);
-    debugPrintf("[telnet] %x\n", tmp);
+    debugPrintf("[telnet] 0x%X\n", tmp);
   }
 
   if (MINITEL_PORT.available() > 0) {
@@ -263,7 +263,7 @@ void loopTelnet() {
       reset();
     }
     telnet.write((uint8_t) tmp);
-    debugPrintf("[keyboard] %x\n", tmp);
+    debugPrintf("[keyboard] 0x%X\n", tmp);
   }
 
 }
@@ -800,7 +800,7 @@ void sshTask(void *pvParameters) {
     } else if (key == 18) { // CTRL+R = RESET
       break;
     }
-    debugPrintf("[KB] got code: %X\n", key);
+    debugPrintf("[KB] got code: 0x%X\n", key);
     switch (key) {
       // redirect minitel special keys
       case SOMMAIRE:   key = 0x07;   break; //BEL : ring
@@ -876,7 +876,7 @@ void loopWebsocket() {
       minitel.pageMode();
       reset();
     }
-    debugPrintf("[KB] got code: %X\n", key);
+    debugPrintf("[KB] got code: 0x%X\n", key);
     // prepare data to send over websocket
     uint8_t payload[4];
     size_t len = 0;
