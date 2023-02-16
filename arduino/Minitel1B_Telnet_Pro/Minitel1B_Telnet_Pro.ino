@@ -95,14 +95,17 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
-  int speed = 0;
-  if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
-    if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
-      speed = minitel.searchSpeed();                           // search speed again if change has failed
+  int speed = MINITEL_BAUD_TRY;
+  MINITEL_PORT.begin(speed); // change minitel1b_Hard default uart speed
+  if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
+    if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
+      if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
+        speed = minitel.searchSpeed();                           // search speed again if change has failed
+      }
     }
   }
 
-  minitel.changeSpeed(speed);
+  // minitel.changeSpeed(speed);
   debugPrintf("Minitel baud set to %d\n", speed);
 
   bool connectionOk = true;
