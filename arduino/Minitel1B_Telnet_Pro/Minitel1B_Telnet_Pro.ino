@@ -95,14 +95,17 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
-  int speed = 0;
-  if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
-    if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
-      speed = minitel.searchSpeed();                           // search speed again if change has failed
+  int speed = MINITEL_BAUD_TRY;
+  MINITEL_PORT.begin(speed); // change minitel1b_Hard default uart speed
+  if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
+    if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
+      if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
+        speed = minitel.searchSpeed();                           // search speed again if change has failed
+      }
     }
   }
 
-  minitel.changeSpeed(speed);
+  // minitel.changeSpeed(speed);
   debugPrintf("Minitel baud set to %d\n", speed);
 
   bool connectionOk = true;
@@ -247,7 +250,7 @@ void loopTelnet() {
   if (telnet.available()) {
     int tmp = telnet.read();
     minitel.writeByte((byte) tmp);
-    debugPrintf("[telnet] %x\n", tmp);
+    debugPrintf("[telnet] 0x%X\n", tmp);
   }
 
   if (MINITEL_PORT.available() > 0) {
@@ -263,7 +266,7 @@ void loopTelnet() {
       reset();
     }
     telnet.write((uint8_t) tmp);
-    debugPrintf("[keyboard] %x\n", tmp);
+    debugPrintf("[keyboard] 0x%X\n", tmp);
   }
 
 }
@@ -285,12 +288,16 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
            key == 3       // CTRL+C
          )) {
     if (key != 0) {
-      Serial.printf("Key = %u\n", key);
-      if (key >= 32 && key <= 127) {
-        out.concat((char)key);
-        minitel.printChar(key);
+      debugPrintf("Key = %u\n", key);
+      String str = minitel.getString(key);
+      if (str != "") {
+        out.concat(str);
+        minitel.print(str);
       } else if (out.length() > 0 && (key == 8 || key == 4935)) { // BACKSPACE
-        out.remove(out.length() - 1);
+        unsigned int index = out.length()-1;
+        if (out.charAt(index) >> 7) // utf-8 multibyte pattern
+          while ((out.charAt(index) >> 6) != 0b11) index--; // utf-8 first byte pattern
+        out.remove(index);
         minitel.noCursor();
         minitel.moveCursorLeft(1);
         minitel.printChar(padChar);
@@ -304,14 +311,15 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.pageMode();
         reset();
       } else if (key == 4933) { // ANNUL
+        unsigned int length = numberOfChars(out);
         minitel.noCursor();
-        for (int i=0; i<out.length(); ++i) {
+        for (int i=0; i<length; ++i) {
           minitel.moveCursorLeft(1);
         }
-        for (int i=0; i<out.length(); ++i) {
+        for (int i=0; i<length; ++i) {
           minitel.printChar(padChar);
         }
-        for (int i=0; i<out.length(); ++i) {
+        for (int i=0; i<length; ++i) {
           minitel.moveCursorLeft(1);
         }
         out = "";
@@ -327,6 +335,20 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
   minitel.noCursor();
   minitel.println();
   return out;
+}
+
+unsigned int numberOfChars(String str) {
+  // number of chars of a string including utf-8 multibyte characters
+  unsigned int index = 0;
+  unsigned int count = 0;
+  while (index<str.length()) {
+    byte car = str.charAt(index);
+    if (car >> 5 == 0b110) index+=2; //utf-8 2 bytes pattern
+    else if (car >> 4 == 0b1110) index+=3; // utf-8 3 bytes pattern
+    else index++; //default (1 byte)
+    count++;
+  }
+  return count;
 }
 
 void loadPrefs() {
@@ -415,7 +437,7 @@ void printPassword(String password) {
   } else {
     minitel.graphicMode();
     minitel.attributs(DEBUT_LIGNAGE);
-    for (int i = 0; i < password.length(); ++i) minitel.graphic(0b001100);
+    for (int i = 0; i < numberOfChars(password); ++i) minitel.graphic(0b001100);
     minitel.attributs(FIN_LIGNAGE);
     minitel.textMode();
   }
@@ -437,7 +459,7 @@ int setPrefs() {
     valid = false;
     if (key != 0) {
       valid = true;
-      Serial.printf("Key = %u\n", key);
+      debugPrintf("Key = %u\n", key);
       if (key == 18) { // CTRL+R = RESET
         valid = false;
         minitel.modeVideotex();
@@ -601,8 +623,8 @@ void switchParameter(int x, int y, bool &destination) {
 int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
   minitel.moveCursorXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
-  Serial.printf("************ %d ***********\n", 41 - x - destination.length());
-  int len = 41 - x - destination.length();
+  int len = 41 - x - numberOfChars(destination);
+  debugPrintf("************ %d ***********\n", len);
   if (len < 0) len = 0;
   for (int i = 0; i < len; ++i) minitel.print(".");
   minitel.moveCursorXY(x, y);
@@ -622,7 +644,7 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
     if (mask) {
       minitel.graphicMode();
       minitel.attributs(DEBUT_LIGNAGE);
-      for (int i = 0; i < destination.length(); ++i) minitel.graphic(0b001100);
+      for (int i = 0; i < numberOfChars(destination); ++i) minitel.graphic(0b001100);
       minitel.attributs(FIN_LIGNAGE);
       minitel.textMode();
     } else
@@ -781,7 +803,14 @@ void sshTask(void *pvParameters) {
       int index = 0;
       while (index < nbytes) {
         char b = sshClient.readIndex(index++);
-        minitel.writeByte(b);
+        if (b <= DEL) minitel.writeByte(b); // print only code < 128
+        else { // replace char with one "?"
+          minitel.writeByte('?');
+          // increment index considering utf-8 encoding
+          if (b < 0b11100000) index+=1;
+          else if (b < 0b11110000) index+=2;
+          else index+=3;
+        }
       }
     }
 
@@ -790,10 +819,10 @@ void sshTask(void *pvParameters) {
     if (key == 0) {
       vTaskDelay(50/portTICK_PERIOD_MS);
       continue;
-    } elseif (key == 18) { // CTRL+R = RESET
+    } else if (key == 18) { // CTRL+R = RESET
       break;
     }
-    debugPrintf("[KB] got code: %X\n", key);
+    debugPrintf("[KB] got code: 0x%X\n", key);
     switch (key) {
       // redirect minitel special keys
       case SOMMAIRE:   key = 0x07;   break; //BEL : ring
@@ -869,7 +898,7 @@ void loopWebsocket() {
       minitel.pageMode();
       reset();
     }
-    debugPrintf("[KB] got code: %X\n", key);
+    debugPrintf("[KB] got code: 0x%X\n", key);
     // prepare data to send over websocket
     uint8_t payload[4];
     size_t len = 0;
@@ -960,7 +989,7 @@ void writePresets() {
     doc["sshPass"] = presets[i].sshPass;
 
     if (serializeJson(doc, file) == 0) {
-      Serial.println(F("Failed to write to file"));
+      debugPrintln(F("Failed to write to file"));
     }
   }
   file.close();
