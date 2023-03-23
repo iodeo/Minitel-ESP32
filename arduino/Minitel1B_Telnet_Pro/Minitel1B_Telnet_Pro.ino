@@ -853,7 +853,8 @@ void sshTask(void *pvParameters) {
     if (cancel) {
       debugPrintf(" > Intercepted ctrl+C\n");
       int nbyte = sshClient.flushReceiving();
-      minitel.println();minitel.println();
+      minitel.writeByte(27); minitel.println("[0m"); // Reset ANSI/VT100 attributes
+      minitel.println();
       minitel.println("\r\r * ctrl+C * ");
       minitel.print("Warning: ");
       minitel.print(String(nbyte));
