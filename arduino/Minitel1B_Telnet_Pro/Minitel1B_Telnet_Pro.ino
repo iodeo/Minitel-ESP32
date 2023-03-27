@@ -111,6 +111,8 @@ void setup() {
   bool connectionOk = true;
   do {
     minitel.modeVideotex();
+    minitel.writeByte(0x1b); minitel.writeByte(0x28); minitel.writeByte(0x40); // Standard G0 textmode charset
+    minitel.writeByte(0x1b); minitel.writeByte(0x50); // Set black background
     minitel.textMode();
     minitel.moveCursorXY(1,1);
     minitel.extendedKeyboard();
@@ -853,7 +855,9 @@ void sshTask(void *pvParameters) {
     if (cancel) {
       debugPrintf(" > Intercepted ctrl+C\n");
       int nbyte = sshClient.flushReceiving();
-      minitel.writeByte(27); minitel.println("[0m"); // Reset ANSI/VT100 attributes
+      if (col80) {
+        minitel.writeByte(0x1b); minitel.println("[0m"); // Reset ANSI/VT100 attributes
+      }
       minitel.println();
       minitel.println("\r\r * ctrl+C * ");
       minitel.print("Warning: ");
