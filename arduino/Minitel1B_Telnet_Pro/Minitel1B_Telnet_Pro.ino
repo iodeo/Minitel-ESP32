@@ -1107,7 +1107,7 @@ void readPresets() {
 
     presets[6].presetName = "TELSTAR by GlassTTY";
     presets[6].url = "glasstty:6502";
-    presets[6].scroll = true;
+    presets[6].scroll = false;
     presets[6].echo = false;
     presets[6].col80 = false;
     presets[6].connectionType = 0; // Telnet
