@@ -1105,16 +1105,27 @@ void readPresets() {
     presets[5].sshUser = "";
     presets[5].sshPass = "";
 
-    presets[6].presetName = "ssh example";
-    presets[6].url = "[host name or ip]";
-    presets[6].scroll = true;
+    presets[6].presetName = "TELSTAR by GlassTTY";
+    presets[6].url = "glasstty:6502";
+    presets[6].scroll = false;
     presets[6].echo = false;
-    presets[6].col80 = true;
-    presets[6].connectionType = 2; // SSH
+    presets[6].col80 = false;
+    presets[6].connectionType = 0; // Telnet
     presets[6].ping_ms = 0;
     presets[6].protocol = "";
-    presets[6].sshUser = "pi";
-    presets[6].sshPass = "raspberry";
+    presets[6].sshUser = "";
+    presets[6].sshPass = "";
+
+    presets[7].presetName = "ssh example";
+    presets[7].url = "[host name or ip]";
+    presets[7].scroll = true;
+    presets[7].echo = false;
+    presets[7].col80 = true;
+    presets[7].connectionType = 2; // SSH
+    presets[7].ping_ms = 0;
+    presets[7].protocol = "";
+    presets[7].sshUser = "pi";
+    presets[7].sshPass = "raspberry";
 
     writePresets();
   }
