@@ -167,13 +167,6 @@ void setup() {
   
       if (telnet.connect(host.c_str(), port)) {
         debugPrintln("Connected");
-        minitel.println();
-        minitel.print("Connected in ");
-        for (int w=3; w>=1; w--) {
-          minitel.print(String(w));
-          minitel.print("...");
-          delay(1000);
-        }
       } else {
         debugPrintln("Connection failed");
         minitel.println();
