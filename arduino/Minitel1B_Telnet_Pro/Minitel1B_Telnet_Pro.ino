@@ -69,6 +69,7 @@ typedef struct {
 } Preset;
 
 Preset presets[20];
+int speed;
 
 void initFS() {
   boolean ok = SPIFFS.begin();
@@ -95,7 +96,7 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
-  int speed = MINITEL_BAUD_TRY;
+  speed = MINITEL_BAUD_TRY;
   MINITEL_PORT.begin(speed); // change minitel1b_Hard default uart speed
   if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
     if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
@@ -397,6 +398,7 @@ void showPrefs() {
   minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
   minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
+  minitel.moveCursorXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
   minitel.moveCursorXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); minitel.clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(password); minitel.clearLineFromCursor(); minitel.println();
@@ -429,7 +431,7 @@ void showPrefs() {
   minitel.attributs(INVERSION_FOND); minitel.print(" SPACE "); minitel.attributs(FOND_NORMAL); minitel.print(" to connect   ");
   minitel.attributs(INVERSION_FOND); minitel.print(" CTRL+R "); minitel.attributs(FOND_NORMAL); minitel.print(" to restart");
 
-  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_BLEU); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
+  minitel.moveCursorXY(1,24); minitel.attributs(CARACTERE_ROUGE); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
   minitel.attributs(CARACTERE_BLANC);
 }
 
@@ -439,7 +441,7 @@ void printPassword(String password) {
   } else {
     minitel.graphicMode();
     minitel.attributs(DEBUT_LIGNAGE);
-    for (int i = 0; i < numberOfChars(password); ++i) minitel.graphic(0b001100);
+    for (int i = 0; i < numberOfChars(password); ++i) minitel.graphic(i <= 30 ? 0b001100 : 0b000000);
     minitel.attributs(FIN_LIGNAGE);
     minitel.textMode();
   }
@@ -474,6 +476,10 @@ int setPrefs() {
         setParameter(10, 4, ssid, false, false);
       } else if (key == '2') {
         setParameter(10, 5, password, true, false);
+        if (password.length() <= 31) {
+          minitel.moveCursorXY(1,6);
+          minitel.clearLineFromCursor();
+        }
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
         if (url.length() <= 40-9) {
@@ -646,7 +652,7 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
     if (mask) {
       minitel.graphicMode();
       minitel.attributs(DEBUT_LIGNAGE);
-      for (int i = 0; i < numberOfChars(destination); ++i) minitel.graphic(0b001100);
+      for (int i = 0; i < numberOfChars(destination); ++i) minitel.graphic(i <= 30 ? 0b001100 : 0b000000);
       minitel.attributs(FIN_LIGNAGE);
       minitel.textMode();
     } else
@@ -686,24 +692,24 @@ void writeConnectionType(byte connectionType) {
   if (connectionType == 0) {
     minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
   } else {
-    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+    minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("Telnet");
-  minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL); minitel.print("/");
+  minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL); minitel.print("/");
 
   if (connectionType == 1) {
     minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
   } else {
-    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+    minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("Websocket");
    
-  minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL); minitel.print("/");
+  minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL); minitel.print("/");
 
   if (connectionType == 2) {
     minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
   } else {
-    minitel.attributs(CARACTERE_BLEU); minitel.attributs(FOND_NORMAL);
+    minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("SSH");
 
