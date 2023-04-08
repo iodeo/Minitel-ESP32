@@ -75,6 +75,9 @@ void initFS() {
   boolean ok = SPIFFS.begin();
   if (!ok)
   {
+    minitel.attributs(CLIGNOTEMENT);
+    minitel.println("Formating SPIFFS, please wait");
+    minitel.attributs(FIXE);
     ok = SPIFFS.format();
     if (ok) SPIFFS.begin();
   }
