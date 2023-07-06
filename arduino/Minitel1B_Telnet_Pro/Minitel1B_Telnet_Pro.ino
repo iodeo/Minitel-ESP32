@@ -100,11 +100,11 @@ void setup() {
 
   // Minitel setup
   speed = MINITEL_BAUD_TRY;
-  MINITEL_PORT.begin(speed); // change minitel1b_Hard default uart speed
+  MINITEL_PORT.updateBaudRate(speed); // override minitel1b_Hard default speed
   if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
-    if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {   // search speed
-      if (minitel.changeSpeed(MINITEL_BAUD_TRY) < 0) {           // set to MINITEL_BAUD_TRY if different
-        speed = minitel.searchSpeed();                           // search speed again if change has failed
+    if ( (speed = minitel.searchSpeed()) < MINITEL_BAUD_TRY) {    // search speed
+      if ( (speed = minitel.changeSpeed(MINITEL_BAUD_TRY)) < 0) { // set to MINITEL_BAUD_TRY if different
+        speed = minitel.searchSpeed();                         // search speed again if change has failed
       }
     }
   }
