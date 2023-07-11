@@ -10,9 +10,12 @@ https://github.com/eserandour/Minitel1B_Hard
 
 **Minitel1B_Websocket_Client** and **Minitel1B_Telnet_Pro** require this additional lib:
 
-https://github.com/Links2004/arduinoWebSockets.git
+https://github.com/Links2004/arduinoWebSockets
 
 **Minitel1B_SSH_Client** and **Minitel1B_Telnet_Pro** require this additional lib:
 
-https://github.com/ewpa/LibSSH-ESP32.git
+https://github.com/ewpa/LibSSH-ESP32
 
+**Minitel1B_Telnet_Pro** require this additional lib:
+
+https://github.com/bblanchon/ArduinoJson

@@ -5,6 +5,7 @@
 
 #include "libssh_esp32.h"
 #include <libssh/libssh.h>
+#include <string.h>
 
 //#include <Minitel1B_Hard.h>
 
