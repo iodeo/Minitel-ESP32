@@ -2,6 +2,14 @@
 
 Some instructions are given in [hackaday project page](https://hackaday.io/project/180473/instructions)
 
+## Arduino IDE Setttings
+
+If the Arduino IDE doesn't have by default the board "ESP32 Dev Module", then go to **Settings** (Arduino IDE menu), then be sure that in **Additional boards manager URLs** there is:
+
+```
+https://espressif.github.io/arduino-esp32/package_esp32_index.json
+```
+
 ## Libraries
 
 Where name is starting by "Minitel1B", the following lib must be added:
