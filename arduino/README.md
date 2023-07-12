@@ -24,6 +24,6 @@ https://github.com/Links2004/arduinoWebSockets
 
 https://github.com/ewpa/LibSSH-ESP32
 
-**Minitel1B_Telnet_Pro** require this additional lib:
+**Minitel1B_Telnet_Pro** requires this additional lib:
 
 https://github.com/bblanchon/ArduinoJson
