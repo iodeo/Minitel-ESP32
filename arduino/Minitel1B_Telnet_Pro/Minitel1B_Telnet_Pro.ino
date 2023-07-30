@@ -101,6 +101,7 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
+  teletelMode();
   speed = MINITEL_BAUD_TRY;
   MINITEL_PORT.updateBaudRate(speed); // override minitel1b_Hard default speed
   if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
