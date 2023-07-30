@@ -1115,7 +1115,7 @@ void readPresets() {
     presets[5].sshPass = "";
 
     presets[6].presetName = "TELSTAR by GlassTTY";
-    presets[6].url = "glasstty:6502";
+    presets[6].url = "glasstty.com:6502";
     presets[6].scroll = false;
     presets[6].echo = false;
     presets[6].col80 = false;
