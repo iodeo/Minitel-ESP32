@@ -120,6 +120,8 @@ void setup() {
     minitel.modeVideotex();
     minitel.writeByte(0x1b); minitel.writeByte(0x28); minitel.writeByte(0x40); // Standard G0 textmode charset
     minitel.writeByte(0x1b); minitel.writeByte(0x50); // Set black background
+    minitel.attributs(FIXE);
+    minitel.attributs(DEMASQUAGE);
     minitel.textMode();
     minitel.moveCursorXY(1,1);
     minitel.extendedKeyboard();
@@ -224,6 +226,7 @@ void setup() {
     // Set 40 or 80 columns
     if (col80) {
       minitel.modeMixte();
+      minitel.writeByte(0x0e); // US ASCII Charset in 80 columns
     } else {
       minitel.modeVideotex();
       minitel.textMode();
