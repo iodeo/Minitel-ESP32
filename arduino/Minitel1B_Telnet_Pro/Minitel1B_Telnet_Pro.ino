@@ -97,10 +97,17 @@ void initFS() {
     SPIFFS.totalBytes());
 }
 
+// ESP_RST_POWERON = 1 = pressed hardware reset button
+// ESP_RST_SW      = 3 = called ESP.restart() function
+// ESP_RST_PANIC   = 4 = after raising exception (e.g. segmentation fault)
+esp_reset_reason_t reset_reason;
+
 void setup() {
+  reset_reason = esp_reset_reason();
   debugBegin(115200);
   debugPrintln("----------------");
   debugPrintln("Debug ready");
+  debugPrintf("RESET_REASON = %d\n", ESP_RST_SW, reset_reason);
 
   // Minitel setup
   // (don't) teletelMode();
