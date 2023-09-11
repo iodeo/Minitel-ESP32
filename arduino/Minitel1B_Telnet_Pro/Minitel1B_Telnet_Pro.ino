@@ -47,6 +47,7 @@ bool scroll = true;
 bool echo = false;
 bool col80 = false;
 bool prestel = false;
+bool altcharset = false;
 int ping_ms = 0;
 String protocol("");
 String sshUser("");
@@ -63,6 +64,7 @@ typedef struct {
   bool echo = false;
   bool col80 = false;
   bool prestel = false;
+  bool altcharset = false;
   byte connectionType = 0;
   int ping_ms = 0;
   String protocol = "";
@@ -101,7 +103,7 @@ void setup() {
   debugPrintln("Debug ready");
 
   // Minitel setup
-  teletelMode();
+  // (don't) teletelMode();
   speed = MINITEL_BAUD_TRY;
   MINITEL_PORT.updateBaudRate(speed); // override minitel1b_Hard default speed
   if (speed != minitel.currentSpeed()) { // avoid unwanted characters when restarting
@@ -226,7 +228,7 @@ void setup() {
     // Set 40 or 80 columns
     if (col80) {
       minitel.modeMixte();
-      minitel.writeByte(0x0e); // US ASCII Charset in 80 columns
+      minitel.writeByte(altcharset ? 0x0e : 0x0f); // US ASCII Charset in 80 columns
     } else {
       minitel.modeVideotex();
       minitel.textMode();
@@ -275,7 +277,7 @@ void loopTelnet() {
     if (tmp == 18) { // CTRL+R = RESET
       telnet.stop();
       WiFi.disconnect();
-      teletelMode();
+      if (prestel) teletelMode();
       minitel.modeVideotex();
       minitel.moveCursorXY(1, 1);
       minitel.clearScreen();
@@ -322,7 +324,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.moveCursorLeft(1);
         minitel.cursor();
       } else if (key == 18) { // CTRL+R = RESET
-        teletelMode();
+        if (prestel) teletelMode();
         minitel.modeVideotex();
         minitel.moveCursorXY(1, 1);
         minitel.clearScreen();
@@ -380,6 +382,7 @@ void loadPrefs() {
   echo = prefs.getBool("echo", false);
   col80 = prefs.getBool("col80", false);
   prestel = prefs.getBool("prestel", false);
+  altcharset = prefs.getBool("altcharset", false);
   connectionType = prefs.getUChar("connectionType", 0);
   ping_ms = prefs.getInt("ping_ms", 0);
   protocol = prefs.getString("protocol", "");
@@ -393,10 +396,11 @@ void savePrefs() {
   if (prefs.getString("ssid",     "") != ssid)     prefs.putString("ssid", ssid);
   if (prefs.getString("password", "") != password) prefs.putString("password", password);
   if (prefs.getString("url",      "") != url)     prefs.putString("url", url);
-  if (prefs.getBool("scroll", false) != scroll)  prefs.putBool("scroll", scroll);
-  if (prefs.getBool("echo",   false) != echo)    prefs.putBool("echo",   echo);
-  if (prefs.getBool("col80",  false) != col80)   prefs.putBool("col80",  col80);
-  if (prefs.getBool("prestel",false) != prestel) prefs.putBool("prestel", prestel);
+  if (prefs.getBool("scroll",    false) != scroll)     prefs.putBool("scroll", scroll);
+  if (prefs.getBool("echo",      false) != echo)       prefs.putBool("echo",   echo);
+  if (prefs.getBool("col80",     false) != col80)      prefs.putBool("col80",  col80);
+  if (prefs.getBool("prestel",   false) != prestel)    prefs.putBool("prestel", prestel);
+  if (prefs.getBool("altcharset",false) != altcharset) prefs.putBool("altcharset", altcharset);
   if (prefs.getUChar("connectionType", 0) != connectionType) prefs.putUChar("connectionType", connectionType);
   if (prefs.getInt("ping_ms", 0) != ping_ms) prefs.putInt("ping_ms", ping_ms);
   if (prefs.getString("protocol", "") != protocol) prefs.putString("protocol", protocol);
@@ -427,7 +431,10 @@ void showPrefs() {
   minitel.print("          ");
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("C"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Prestel: "); writeBool(prestel); minitel.clearLineFromCursor();
   minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("5"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Echo  : "); writeBool(echo); minitel.clearLineFromCursor();
+  minitel.print("          ");
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("A"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("AltChar: "); writeBool(altcharset); minitel.clearLineFromCursor();
+  minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("6"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Col80 : "); writeBool(col80); minitel.clearLineFromCursor();
   minitel.println();
   minitel.moveCursorXY(1,13);
@@ -514,6 +521,8 @@ int setPrefs() {
         switchParameter(12, 10, echo);
       } else if (key == '6') {
         switchParameter(12, 11, col80);
+      } else if (key == 'a' || key == 'A') {
+        switchParameter(37, 10, altcharset);
       } else if (key == 'c' || key == 'C') {
         switchParameter(37, 9, prestel);
       } else if (key == '7') {
@@ -576,6 +585,7 @@ void savePresets() {
       presets[slot].echo = echo;
       presets[slot].col80 = col80;
       presets[slot].prestel = prestel;
+      presets[slot].altcharset = altcharset;
       presets[slot].connectionType = connectionType;
       presets[slot].ping_ms = ping_ms;
       presets[slot].protocol = protocol;
@@ -614,6 +624,7 @@ void loadPresets() {
       echo = presets[slot].echo;
       col80 = presets[slot].col80;
       prestel = presets[slot].prestel;
+      altcharset = presets[slot].altcharset;
       connectionType = presets[slot].connectionType;
       ping_ms = presets[slot].ping_ms;
       protocol = presets[slot].protocol;
@@ -805,6 +816,7 @@ void loopSsh() {
   if (eTaskGetState(sshTaskHandle)!=eDeleted) {
     vTaskDelay(500 / portTICK_PERIOD_MS);
   } else {// reset otherwise
+    if (!col80 && prestel) teletelMode();
     reset();
   }
 }
@@ -854,7 +866,7 @@ void sshTask(void *pvParameters) {
       vTaskDelay(50/portTICK_PERIOD_MS);
       continue;
     } else if (key == 18) { // CTRL+R = RESET
-      if (!col80) teletelMode();
+      if (!col80 && prestel) teletelMode();
       break;
     }
     debugPrintf("[KB] got code: 0x%X\n", key);
@@ -929,7 +941,7 @@ void loopWebsocket() {
     if (key == 18) { // CTRL + R = RESET
       webSocket.disconnect();
       WiFi.disconnect();
-      teletelMode();
+      if (!col80 && prestel) teletelMode();
       minitel.modeVideotex();
       minitel.moveCursorXY(1, 1);
       minitel.clearScreen();
@@ -960,6 +972,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       delay(3000);
       webSocket.disconnect();
       WiFi.disconnect();
+      if (!col80 && prestel) teletelMode();
       reset();
 */
       break;
@@ -1022,6 +1035,7 @@ void writePresets() {
     doc["echo"] = presets[i].echo;
     doc["col80"] = presets[i].col80;
     doc["prestel"] = presets[i].prestel;
+    doc["altcharset"] = presets[i].altcharset;
     doc["connectionType"] = presets[i].connectionType;
     doc["ping_ms"] = presets[i].ping_ms;
     doc["protocol"] = presets[i].protocol;
@@ -1050,6 +1064,7 @@ void readPresets() {
       presets[i].echo = false;
       presets[i].col80 = false;
       presets[i].prestel = false;
+      presets[i].altcharset = false;
       presets[i].connectionType = 0;
       presets[i].ping_ms = 0;
       presets[i].protocol = "";
@@ -1062,6 +1077,7 @@ void readPresets() {
       bool _echo = doc["echo"]; presets[i].echo = _echo;
       bool _col80 = doc["col80"]; presets[i].col80 = _col80;
       bool _prestel = doc["prestel"]; presets[i].prestel = _prestel;
+      bool _altcharset = doc["altcharset"]; presets[i].altcharset = _altcharset;
       byte _connectionType = doc["connectionType"]; presets[i].connectionType = _connectionType;
       int _ping_ms = doc["ping_ms"]; presets[i].ping_ms = _ping_ms;
       String _protocol = doc["protocol"]; presets[i].protocol = _protocol == "null" ? "" : _protocol;
@@ -1082,6 +1098,7 @@ void readPresets() {
     presets[0].echo = false;
     presets[0].col80 = false;
     presets[0].prestel = false;
+    presets[0].altcharset = false;
     presets[0].connectionType = 0; // Telnet
     presets[0].ping_ms = 0;
     presets[0].protocol = "";
@@ -1093,7 +1110,8 @@ void readPresets() {
     presets[1].scroll = false;
     presets[1].echo = false;
     presets[1].col80 = false;
-    presets[0].prestel = false;
+    presets[1].prestel = false;
+    presets[1].altcharset = false;
     presets[1].connectionType = 1; // Websocket
     presets[1].ping_ms = 0;
     presets[1].protocol = "";
@@ -1105,7 +1123,8 @@ void readPresets() {
     presets[2].scroll = false;
     presets[2].echo = false;
     presets[2].col80 = false;
-    presets[0].prestel = false;
+    presets[2].prestel = false;
+    presets[2].altcharset = false;
     presets[2].connectionType = 1; // Websocket
     presets[2].ping_ms = 10000;
     presets[2].protocol = "tty";
@@ -1117,7 +1136,8 @@ void readPresets() {
     presets[3].scroll = false;
     presets[3].echo = false;
     presets[3].col80 = false;
-    presets[0].prestel = false;
+    presets[3].prestel = false;
+    presets[3].altcharset = false;
     presets[3].connectionType = 1; // Websocket
     presets[3].ping_ms = 0;
     presets[3].protocol = "";
@@ -1129,7 +1149,8 @@ void readPresets() {
     presets[4].scroll = false;
     presets[4].echo = false;
     presets[4].col80 = false;
-    presets[0].prestel = false;
+    presets[4].prestel = false;
+    presets[4].altcharset = false;
     presets[4].connectionType = 1; // Websocket
     presets[4].ping_ms = 0;
     presets[4].protocol = "";
@@ -1141,7 +1162,8 @@ void readPresets() {
     presets[5].scroll = false;
     presets[5].echo = false;
     presets[5].col80 = false;
-    presets[0].prestel = false;
+    presets[5].prestel = false;
+    presets[5].altcharset = false;
     presets[5].connectionType = 1; // Websocket
     presets[5].ping_ms = 0;
     presets[5].protocol = "";
@@ -1153,7 +1175,8 @@ void readPresets() {
     presets[6].scroll = false;
     presets[6].echo = false;
     presets[6].col80 = false;
-    presets[0].prestel = true;
+    presets[6].prestel = true;
+    presets[6].altcharset = true;
     presets[6].connectionType = 0; // Telnet
     presets[6].ping_ms = 0;
     presets[6].protocol = "";
@@ -1165,7 +1188,8 @@ void readPresets() {
     presets[7].scroll = true;
     presets[7].echo = false;
     presets[7].col80 = true;
-    presets[0].prestel = false;
+    presets[7].prestel = false;
+    presets[7].altcharset = false;
     presets[7].connectionType = 2; // SSH
     presets[7].ping_ms = 0;
     presets[7].protocol = "";
