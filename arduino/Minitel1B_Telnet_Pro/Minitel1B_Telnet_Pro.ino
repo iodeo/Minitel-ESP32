@@ -315,7 +315,7 @@ void loopTelnet() {
     if (tmp == 18) { // CTRL+R = RESET
       telnet.stop();
       WiFi.disconnect();
-      if (prestel) teletelMode();
+      if (!col80 && prestel) teletelMode();
       minitel.modeVideotex();
       minitel.moveCursorXY(1, 1);
       minitel.clearScreen();
@@ -353,7 +353,7 @@ void loopSerial() {
   if (endFlag) {
     DEBUG_PORT.println();
     DEBUG_PORT.println("*** Telnet Pro reset ***");
-    if (prestel) teletelMode();
+    if (!col80 && prestel) teletelMode();
     minitel.modeVideotex();
     minitel.moveCursorXY(1, 1);
     minitel.clearScreen();
@@ -396,7 +396,6 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.moveCursorLeft(1);
         minitel.cursor();
       } else if (key == 18) { // CTRL+R = RESET
-        if (prestel) teletelMode();
         minitel.modeVideotex();
         minitel.moveCursorXY(1, 1);
         minitel.clearScreen();
