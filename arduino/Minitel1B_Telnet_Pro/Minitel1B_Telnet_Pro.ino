@@ -285,19 +285,6 @@ void setup() {
     // ECHO PRESTEL ON/OFF
   }
 
-  // Set echo
-  minitel.echo(echo);
-
-  // Set scroll
-  if (scroll) {
-    minitel.scrollMode();
-  } else {
-    minitel.pageMode();
-  }
-
-  minitel.moveCursorXY(1, 1);
-  minitel.clearScreen();
-
   if (connectionType != 3) { // debug port used for serial
     debugPrintln("Minitel initialized");
   }
