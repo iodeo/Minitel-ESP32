@@ -353,6 +353,7 @@ void loopSerial() {
   if (endFlag) {
     DEBUG_PORT.println();
     DEBUG_PORT.println("*** Telnet Pro reset ***");
+    if (prestel) teletelMode();
     minitel.modeVideotex();
     minitel.moveCursorXY(1, 1);
     minitel.clearScreen();
