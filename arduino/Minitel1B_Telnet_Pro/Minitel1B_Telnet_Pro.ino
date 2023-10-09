@@ -257,7 +257,7 @@ void setup() {
   minitel.moveCursorXY(1,1);
   minitel.clearScreen();
 
-  if (!prestel) {
+  if (!prestel || col80) {
     // Set 40 or 80 columns
     if (col80) {
       minitel.modeMixte();
