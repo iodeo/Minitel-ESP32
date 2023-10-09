@@ -53,7 +53,7 @@ String protocol("");
 String sshUser("");
 String sshPass("");
 
-byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH
+byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH 3=Serial
 bool ssl = false;
 
 typedef struct {
@@ -148,32 +148,36 @@ void setup() {
     showPrefs();
     setPrefs();
   
-    separateUrl(url);
-
-    minitel.capitalMode();
-    minitel.println("Connecting, please wait. CTRL+R to reset");
-
     // WiFi connection
-    debugPrintf("\nWiFi Connecting to %s ", ssid.c_str());
-    WiFi.disconnect();
-    delay(100);
-    WiFi.begin(ssid.c_str(), password.c_str());
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      debugPrint(".");
-      unsigned long key = minitel.getKeyCode();
-      if (key == 18) { // CTRL+R = RESET
-        minitel.moveCursorXY(1, 1);
-        minitel.clearScreen();
-        WiFi.disconnect();
-        reset();
+    if (connectionType != 3) { // wifi not needed for serial
+      
+      separateUrl(url);
+
+      minitel.capitalMode();
+      minitel.println("Connecting, please wait. CTRL+R to reset");
+  
+      
+      debugPrintf("\nWiFi Connecting to %s ", ssid.c_str());
+      WiFi.disconnect();
+      delay(100);
+      WiFi.begin(ssid.c_str(), password.c_str());
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        debugPrint(".");
+        unsigned long key = minitel.getKeyCode();
+        if (key == 18) { // CTRL+R = RESET
+          minitel.moveCursorXY(1, 1);
+          minitel.clearScreen();
+          WiFi.disconnect();
+          reset();
+        }
       }
+      debugPrintln();
+      debugPrint("WiFi connected with local IP: ");
+      debugPrintln(WiFi.localIP());
+      minitel.print("Connected with IP ");
+      minitel.println(WiFi.localIP().toString());
     }
-    debugPrintln();
-    debugPrint("WiFi connected with local IP: ");
-    debugPrintln(WiFi.localIP());
-    minitel.print("Connected with IP ");
-    minitel.println(WiFi.localIP().toString());
 
 
     if (connectionType == 0) { // TELNET --------------------------------------------------------------------------------------
@@ -215,14 +219,36 @@ void setup() {
         // consider connection disconnected if pong is not received 2 times
         webSocket.enableHeartbeat(ping_ms, 3000, 2);
       }
+
     } else if (connectionType == 2) { // SSH ---------------------------------------------------------------------------------------
       debugPrintf("\n> SSH task setup\n");
       BaseType_t xReturned;
       xReturned = xTaskCreatePinnedToCore(sshTask, "sshTask", 51200, NULL,
         (configMAX_PRIORITIES - 1), &sshTaskHandle, ARDUINO_RUNNING_CORE);
       if (xReturned!=pdPASS) debugPrintf("  > Failed to create task\n");
+
+    } else if (connectionType == 3) { // Serial ------------------------------------------------------------------------------------
+#ifdef DEBUG
+      debugPrintf("Serial redirection at %u bauds - 7E1\n", speed);
+      debugPrintf("*** Debug end ***\n");
+      DEBUG_PORT.end();
+#endif
+
+      DEBUG_PORT.begin(speed, SERIAL_7E1);
+      DEBUG_PORT.println(); DEBUG_PORT.println("Minitel serial port setup");
+
+      minitel.capitalMode(); 
+      minitel.attributs(DOUBLE_HAUTEUR); minitel.println("Minitel to Usb Serial adapter"); minitel.println();
+      minitel.attributs(GRANDEUR_NORMALE); minitel.println(" PORT SETTINGS");minitel.println();
+      minitel.print(  "  * Baud rate: "); minitel.println(String(speed));
+      minitel.println("  * Data bits: 7");
+      minitel.println("  * Parity   : E");
+      minitel.println("  * Stop bit : 1");
+      minitel.println(); minitel.println();
+      minitel.println(" Ctrl+R to restart");
+      delay(2000); // ok to use as no wifi is involved here
     }  // --------------------------------------------------------------------------------------------------------------------------
-  
+
   
   
   } while (!connectionOk);
@@ -258,7 +284,23 @@ void setup() {
     prestelMode();
     // ECHO PRESTEL ON/OFF
   }
-  debugPrintln("Minitel initialized");
+
+  // Set echo
+  minitel.echo(echo);
+
+  // Set scroll
+  if (scroll) {
+    minitel.scrollMode();
+  } else {
+    minitel.pageMode();
+  }
+
+  minitel.moveCursorXY(1, 1);
+  minitel.clearScreen();
+
+  if (connectionType != 3) { // debug port used for serial
+    debugPrintln("Minitel initialized");
+  }
 
 }
 
@@ -269,6 +311,8 @@ void loop() {
     loopWebsocket();
   else if (connectionType == 2) // SSH
     loopSsh();
+  else if (connectionType == 3) // SERIAL
+    loopSerial();
 }
 
 void loopTelnet() {
@@ -296,6 +340,39 @@ void loopTelnet() {
     debugPrintf("[keyboard] 0x%X\n", tmp);
   }
 
+}
+
+void loopSerial() {
+
+  // WARNING : No debug message should be used here
+
+  bool endFlag = false;
+
+  // minitel -> usb
+  while (MINITEL_PORT.available() > 0) {
+    byte inByte = MINITEL_PORT.read();
+    if (inByte == 18) { // CTRL+R
+      endFlag = true;
+    }
+    DEBUG_PORT.write(inByte);
+  }
+
+  // usb -> minitel
+  while (DEBUG_PORT.available() > 0) {
+    MINITEL_PORT.write(DEBUG_PORT.read());
+  }
+
+  // end of serial loop
+  if (endFlag) {
+    DEBUG_PORT.println();
+    DEBUG_PORT.println("*** Telnet Pro reset ***");
+    minitel.modeVideotex();
+    minitel.moveCursorXY(1, 1);
+    minitel.clearScreen();
+    minitel.echo(true);
+    minitel.pageMode();
+    reset();
+  }
 }
 
 String inputString(String defaultValue, int& exitCode) {
@@ -663,7 +740,7 @@ void displayPresets(String title) {
 }
 
 void cycleConnectionType(int x, int y) {
-  connectionType = (connectionType + 1) % 3;
+  connectionType = (connectionType + 1) % 4;
   minitel.moveCursorXY(x,y); writeConnectionType(connectionType);
 }
 
@@ -756,6 +833,15 @@ void writeConnectionType(byte connectionType) {
     minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL);
   }
   minitel.print("SSH");
+
+  minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL); minitel.print("/");
+
+  if (connectionType == 3) {
+    minitel.attributs(CARACTERE_BLANC); minitel.attributs(INVERSION_FOND);
+  } else {
+    minitel.attributs(CARACTERE_ROUGE); minitel.attributs(FOND_NORMAL);
+  }
+  minitel.print("Serial");
 
   minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NORMAL);
 }
