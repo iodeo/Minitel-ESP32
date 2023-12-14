@@ -1252,31 +1252,44 @@ void readPresets() {
     presets[5].sshUser = "";
     presets[5].sshPass = "";
 
-    presets[6].presetName = "TELSTAR by GlassTTY";
-    presets[6].url = "glasstty.com:6502";
+    presets[6].presetName = "miniPAVI";
+    presets[6].url = "ws://go.minipavi.fr:8182";
     presets[6].scroll = false;
     presets[6].echo = false;
     presets[6].col80 = false;
-    presets[6].prestel = true;
-    presets[6].altcharset = true;
-    presets[6].connectionType = 0; // Telnet
+    presets[6].prestel = false;
+    presets[6].altcharset = false;
+    presets[6].connectionType = 1; // ws
     presets[6].ping_ms = 0;
     presets[6].protocol = "";
     presets[6].sshUser = "";
     presets[6].sshPass = "";
 
-    presets[7].presetName = "ssh example";
-    presets[7].url = "[host name or ip]";
-    presets[7].scroll = true;
+    presets[7].presetName = "TELSTAR by GlassTTY";
+    presets[7].url = "glasstty.com:6502";
+    presets[7].scroll = false;
     presets[7].echo = false;
-    presets[7].col80 = true;
-    presets[7].prestel = false;
-    presets[7].altcharset = false;
-    presets[7].connectionType = 2; // SSH
+    presets[7].col80 = false;
+    presets[7].prestel = true;
+    presets[7].altcharset = true;
+    presets[7].connectionType = 0; // Telnet
     presets[7].ping_ms = 0;
     presets[7].protocol = "";
-    presets[7].sshUser = "pi";
-    presets[7].sshPass = "raspberry";
+    presets[7].sshUser = "";
+    presets[7].sshPass = "";
+
+    presets[8].presetName = "ssh example";
+    presets[8].url = "[host name or ip]";
+    presets[8].scroll = true;
+    presets[8].echo = false;
+    presets[8].col80 = true;
+    presets[8].prestel = false;
+    presets[8].altcharset = false;
+    presets[8].connectionType = 2; // SSH
+    presets[8].ping_ms = 0;
+    presets[8].protocol = "";
+    presets[8].sshUser = "pi";
+    presets[8].sshPass = "raspberry";
 
     writePresets();
   }
