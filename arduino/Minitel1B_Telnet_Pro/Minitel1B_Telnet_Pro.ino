@@ -623,8 +623,8 @@ int setPrefs() {
     }
     key = minitel.getKeyCode();
   }
-  minitel.moveCursorXY(1, 1);
-  minitel.clearScreen();
+  minitel.newXY(1, 0); minitel.cancel();
+  minitel.newScreen();
   return 0;
 }
 
