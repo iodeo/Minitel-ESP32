@@ -137,7 +137,7 @@ void setup() {
     minitel.newXY(1,1);
     extendedKeyboard();
     minitel.textMode();
-    minitel.clearScreen();
+    clearScreen();
     minitel.echo(false);
     minitel.pageMode();
 
@@ -169,7 +169,7 @@ void setup() {
         unsigned long key = minitel.getKeyCode();
         if (key == 18) { // CTRL+R = RESET
           minitel.newXY(1, 1);
-          minitel.clearScreen();
+          clearScreen();
           WiFi.disconnect();
           reset();
         }
@@ -240,15 +240,23 @@ void setup() {
       DEBUG_PORT.println(); DEBUG_PORT.println("Minitel serial port setup");
 
       minitel.capitalMode(); 
-      minitel.attributs(DOUBLE_HAUTEUR); minitel.println("Minitel to Usb Serial adapter"); minitel.println();
-      minitel.attributs(GRANDEUR_NORMALE); minitel.println(" PORT SETTINGS");minitel.println();
+      minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Minitel to Usb Serial adapter");
+      if (advanced) {
+        minitel.println();
+        minitel.attributs(GRANDEUR_NORMALE);
+        minitel.println();
+      } else {
+        minitel.newXY(1,4);
+      }
+      minitel.println(" PORT SETTINGS"); minitel.println();
       minitel.print(  "  * Baud rate: "); minitel.println(String(speed));
       minitel.println("  * Data bits: 7");
       minitel.println("  * Parity   : E");
       minitel.println("  * Stop bit : 1");
       minitel.println(); minitel.println();
       minitel.println(" Ctrl+R to restart");
-      delay(2000); // ok to use as no wifi is involved here
+      delay(advanced ? 2000 : 3000); // ok to use as no wifi is involved here
+      minitel.cursor();
     }  // --------------------------------------------------------------------------------------------------------------------------
 
   
@@ -257,7 +265,7 @@ void setup() {
 
   minitel.textMode();
   minitel.newXY(1,1);
-  minitel.clearScreen();
+  clearScreen();
 
   if (!prestel || col80) {
     // Set 40 or 80 columns
@@ -280,7 +288,7 @@ void setup() {
     }
 
     minitel.newXY(1, 1);
-    minitel.clearScreen();
+    clearScreen();
   } else { // prestel = true;
     minitel.changeSpeed(1200); // decrease speed
     prestelMode();
@@ -320,7 +328,7 @@ void loopTelnet() {
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
-      minitel.clearScreen();
+      clearScreen();
       minitel.echo(true);
       minitel.pageMode();
       reset();
@@ -358,7 +366,7 @@ void loopSerial() {
     if (!col80 && prestel) teletelMode();
     modeVideotex();
     minitel.newXY(1, 1);
-    minitel.clearScreen();
+    clearScreen();
     minitel.echo(true);
     minitel.pageMode();
     reset();
@@ -400,7 +408,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
       } else if (key == 18) { // CTRL+R = RESET
         modeVideotex();
         minitel.newXY(1, 1);
-        minitel.clearScreen();
+        clearScreen();
         minitel.echo(true);
         minitel.pageMode();
         reset();
@@ -487,12 +495,16 @@ void showPrefs() {
   minitel.smallMode();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.attributs(CARACTERE_ROUGE); minitel.print("?:HELP"); minitel.cancel(); minitel.moveCursorDown(1);
-  minitel.clearScreen();
+  clearScreen();
   minitel.newXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
   minitel.textMode();
-  minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.println("  Minitel Telnet Pro  ");
-  minitel.attributs(FOND_NORMAL); minitel.attributs(GRANDEUR_NORMALE);
+  minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.print("  Minitel Telnet Pro  ");
+  if (advanced) {
+    minitel.println();
+    minitel.attributs(FOND_NORMAL);
+    minitel.attributs(GRANDEUR_NORMALE);
+  }
   minitel.newXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
   minitel.newXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); clearLineFromCursor(); minitel.println();
@@ -570,7 +582,7 @@ int setPrefs() {
         valid = false;
         modeVideotex();
         minitel.newXY(1, 1);
-        minitel.clearScreen();
+        clearScreen();
         minitel.echo(true);
         minitel.pageMode();
         reset();
@@ -717,10 +729,11 @@ void loadPresets() {
 
 void displayPresets(String title) {
   static char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  minitel.newXY(1,1);
-  minitel.clearScreen();
-  minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_CYAN); minitel.println(title); minitel.attributs(GRANDEUR_NORMALE);
+  clearScreen(); minitel.newXY(1,1);
+  minitel.attributs(DOUBLE_HAUTEUR);
+  minitel.attributs(CARACTERE_CYAN); minitel.print(title);
   minitel.newXY(1,4);
+  if (advanced) minitel.attributs(GRANDEUR_NORMALE);
   for (int i=0; i<20; ++i) {
     minitel.attributs(CARACTERE_BLANC);
     minitel.printChar(alphabet[i]);
@@ -1008,7 +1021,7 @@ void sshTask(void *pvParameters) {
   WiFi.disconnect();
   modeVideotex();
   minitel.newXY(1, 1);
-  minitel.clearScreen();
+  clearScreen();
   minitel.echo(true);
   minitel.pageMode();
   vTaskDelete(NULL);
@@ -1029,7 +1042,7 @@ void loopWebsocket() {
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
-      minitel.clearScreen();
+      clearScreen();
       minitel.echo(true);
       minitel.pageMode();
       reset();
@@ -1374,11 +1387,20 @@ void clearLineFromCursor() {
   if (advanced) minitel.clearLineFromCursor();
 }
 
+void clearScreen() {
+  if (advanced) {
+    minitel.clearScreen();
+    return;
+  }
+  minitel.newXY(1,0); minitel.cancel(); // erase status row 0
+  minitel.newScreen(); // erase rows 1 to 24
+}
+
 void showHelp() {
   minitel.textMode(); minitel.noCursor();
   minitel.smallMode();
   minitel.newXY(1,0); minitel.attributs(CARACTERE_ROUGE); minitel.println("HELP PAGE"); minitel.cancel(); minitel.moveCursorDown(1);
-  minitel.clearScreen();
+  clearScreen();
   minitel.newXY(1,2);
   minitel.attributs(CARACTERE_ROUGE); minitel.attributs(DEBUT_LIGNAGE); minitel.print(" Wifi settings (not used for Serial)    "); minitel.attributs(FIN_LIGNAGE);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); minitel.println("name of your wifi network");
