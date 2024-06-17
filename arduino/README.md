@@ -10,10 +10,6 @@ If the Arduino IDE doesn't have by default the board "ESP32 Dev Module", then go
 https://espressif.github.io/arduino-esp32/package_esp32_index.json
 ```
 
-**IMPORTANT** keep version 2.0.x of esp32 library (**don't** jump on 3.x.x), like in this screenshot:
-
-<img src="./libesp32.png" alt="LibESP32Screenshot" style="width:400px;"/>
-
 ## Libraries
 
 Where name is starting by "Minitel1B", the following lib must be added:
@@ -31,3 +27,9 @@ https://github.com/ewpa/LibSSH-ESP32
 **Minitel1B_Telnet_Pro** requires this additional lib:
 
 https://github.com/bblanchon/ArduinoJson
+
+## IMPORTANT WARNING
+
+keep version 2.0.x of esp32 library (**don't** jump on 3.x.x), like in this screenshot:
+
+<img src="./libesp32.png" alt="LibESP32Screenshot" style="width:400px;"/>
