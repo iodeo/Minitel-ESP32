@@ -12,7 +12,7 @@ https://espressif.github.io/arduino-esp32/package_esp32_index.json
 
 **IMPORTANT** keep version 2.0.x of esp32 library (**don't** jump on 3.x.x), like in this screenshot:
 
-![LibESP32Screenshot](./libesp32.png)
+<img src="./libesp32.png" alt="LibESP32Screenshot" style="width:400px;"/>
 
 ## Libraries
 
