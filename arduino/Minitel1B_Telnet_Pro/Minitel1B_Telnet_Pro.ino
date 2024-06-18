@@ -491,11 +491,11 @@ void savePrefs() {
 }
 
 void showPrefs() {
+  clearScreen();
   minitel.textMode(); minitel.noCursor();
   minitel.smallMode();
   minitel.attributs(GRANDEUR_NORMALE); minitel.attributs(CARACTERE_BLANC); minitel.attributs(FOND_NOIR); minitel.noCursor();
   minitel.newXY(1,0); minitel.attributs(CARACTERE_ROUGE); minitel.print("?:HELP"); minitel.cancel(); minitel.moveCursorDown(1);
-  clearScreen();
   minitel.newXY(9, 1);
   minitel.attributs(FIN_LIGNAGE);
   minitel.textMode();
