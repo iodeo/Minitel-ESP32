@@ -14,7 +14,8 @@ https://espressif.github.io/arduino-esp32/package_esp32_index.json
 
 Where name is starting by "Minitel1B", the following lib must be added:
 
-https://github.com/eserandour/Minitel1B_Hard
+https://github.com/iodeo/Minitel1B_Hard
+(forked from https://github.com/eserandour/Minitel1B_Hard)
 
 **Minitel1B_Websocket_Client** and **Minitel1B_Telnet_Pro** require this additional lib:
 
