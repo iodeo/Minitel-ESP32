@@ -241,9 +241,7 @@ void setup() {
 
       minitel.capitalMode(); 
       minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Minitel to Usb Serial adapter");
-      minitel.println();
-      minitel.attributs(GRANDEUR_NORMALE);
-      minitel.println();
+      minitel.newXY(1,4);
       minitel.println(" PORT SETTINGS"); minitel.println();
       minitel.print(  "  * Baud rate: "); minitel.println(String(speed));
       minitel.println("  * Data bits: 7");
@@ -496,9 +494,6 @@ void showPrefs() {
   minitel.attributs(FIN_LIGNAGE);
   minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.print("  Minitel Telnet Pro  ");
-  minitel.println();
-  minitel.attributs(FOND_NORMAL);
-  minitel.attributs(GRANDEUR_NORMALE);
   minitel.newXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
   minitel.newXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); clearLineFromCursor(); minitel.println();
