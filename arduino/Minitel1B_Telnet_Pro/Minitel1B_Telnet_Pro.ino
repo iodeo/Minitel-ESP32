@@ -241,13 +241,9 @@ void setup() {
 
       minitel.capitalMode(); 
       minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Minitel to Usb Serial adapter");
-      if (advanced) {
-        minitel.println();
-        minitel.attributs(GRANDEUR_NORMALE);
-        minitel.println();
-      } else {
-        minitel.newXY(1,4);
-      }
+      minitel.println();
+      minitel.attributs(GRANDEUR_NORMALE);
+      minitel.println();
       minitel.println(" PORT SETTINGS"); minitel.println();
       minitel.print(  "  * Baud rate: "); minitel.println(String(speed));
       minitel.println("  * Data bits: 7");
@@ -500,11 +496,9 @@ void showPrefs() {
   minitel.attributs(FIN_LIGNAGE);
   minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.print("  Minitel Telnet Pro  ");
-  if (advanced) {
-    minitel.println();
-    minitel.attributs(FOND_NORMAL);
-    minitel.attributs(GRANDEUR_NORMALE);
-  }
+  minitel.println();
+  minitel.attributs(FOND_NORMAL);
+  minitel.attributs(GRANDEUR_NORMALE);
   minitel.newXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
   minitel.newXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); clearLineFromCursor(); minitel.println();
@@ -532,12 +526,12 @@ void showPrefs() {
 
   minitel.newXY(2,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
   minitel.newXY(6,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
-  rectangle(1,18,4,21);
+  minitel.rect(1,18,4,21);
 
   int delta=24;
   minitel.newXY(2+delta,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("L");
   minitel.newXY(6+delta,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
-  rectangle(1+delta,18,4+delta,21);
+  minitel.rect(1+delta,18,4+delta,21);
 
   minitel.attributs(GRANDEUR_NORMALE);
   minitel.attributs(CARACTERE_JAUNE); 
@@ -733,7 +727,7 @@ void displayPresets(String title) {
   minitel.attributs(DOUBLE_HAUTEUR);
   minitel.attributs(CARACTERE_CYAN); minitel.print(title);
   minitel.newXY(1,4);
-  if (advanced) minitel.attributs(GRANDEUR_NORMALE);
+  minitel.attributs(GRANDEUR_NORMALE);
   for (int i=0; i<20; ++i) {
     minitel.attributs(CARACTERE_BLANC);
     minitel.printChar(alphabet[i]);
@@ -1314,43 +1308,6 @@ void readPresets() {
 
 void reset() {
   ESP.restart();
-}
-
-void rectangle(int x1, int y1, int x2, int y2) {
-  horizontalLine(x1,y1,x2,BOTTOM);
-  verticalLine(x2,y1+1,y2,RIGHT,DOWN);
-  horizontalLine(x1,y2,x2,TOP);
-  verticalLine(x1,y1,y2-1,LEFT,UP);
-}
-
-void horizontalLine(int x1, int y, int x2, int position) {
-  minitel.textMode();
-  minitel.newXY(x1,y);
-  switch (position) {
-    case TOP    : minitel.writeByte(0x7E); break;
-    case CENTER : minitel.writeByte(0x60); break;
-    case BOTTOM : minitel.writeByte(0x5F); break;
-  }
-  minitel.repeat(x2-x1);
-}
-
-void verticalLine(int x, int y1, int y2, int position, int sens) {
-  minitel.textMode();
-  switch (sens) {
-    case DOWN : minitel.newXY(x,y1); break;
-    case UP   : minitel.newXY(x,y2); break;
-  }
-  for (int i=0; i<y2-y1; i++) {
-    switch (position) {
-      case LEFT   : minitel.writeByte(0x7B); break;
-      case CENTER : minitel.writeByte(0x7C); break;
-      case RIGHT  : minitel.writeByte(0x7D); break;
-    }
-    switch (sens) {
-      case DOWN : minitel.moveCursorLeft(1); minitel.moveCursorDown(1); break;
-      case UP   : minitel.moveCursorLeft(1); minitel.moveCursorUp(1); break;
-    }
-  }
 }
 
 void teletelMode() {
