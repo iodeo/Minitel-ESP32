@@ -722,7 +722,6 @@ void displayPresets(String title) {
   minitel.attributs(DOUBLE_HAUTEUR);
   minitel.attributs(CARACTERE_CYAN); minitel.print(title);
   minitel.newXY(1,4);
-  minitel.attributs(GRANDEUR_NORMALE);
   for (int i=0; i<20; ++i) {
     minitel.attributs(CARACTERE_BLANC);
     minitel.printChar(alphabet[i]);
