@@ -40,6 +40,7 @@ String ssid("");
 String password("");
 
 bool advanced = false; // false=Minitel1, true=Minitel1B or above
+bool functionKey = false; // flag use when reading keyboard byte by byte
 String url("");
 String host("");
 String path("");
@@ -167,7 +168,7 @@ void setup() {
         delay(500);
         debugPrint(".");
         unsigned long key = minitel.getKeyCode();
-        if (key == 18) { // CTRL+R = RESET
+        if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
           minitel.newXY(1, 1);
           minitel.newScreen();
           WiFi.disconnect();
@@ -316,7 +317,7 @@ void loopTelnet() {
 
   if (MINITEL_PORT.available() > 0) {
     byte tmp = minitel.readByte();
-    if (tmp == 18) { // CTRL+R = RESET
+    if (tmp == 18 || (functionKey && tmp == 0x49)) { // CTRL+R = RESET ou TS+CONNEXION
       telnet.stop();
       WiFi.disconnect();
       if (!col80 && prestel) teletelMode();
@@ -327,6 +328,7 @@ void loopTelnet() {
       minitel.pageMode();
       reset();
     }
+    functionKey = (tmp == 0x13);
     telnet.write((uint8_t) tmp);
     debugPrintf("[keyboard] 0x%X\n", tmp);
   }
@@ -342,9 +344,10 @@ void loopSerial() {
   // minitel -> usb
   while (MINITEL_PORT.available() > 0) {
     byte inByte = MINITEL_PORT.read();
-    if (inByte == 18) { // CTRL+R
+    if (inByte == 18 || (functionKey && inByte == 0x49)) { // CTRL+R = RESET ou TS+CONNEXION
       endFlag = true;
     }
+    functionKey = (inByte == 0x13);
     DEBUG_PORT.write(inByte);
   }
 
@@ -399,7 +402,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
         minitel.printChar(padChar);
         minitel.moveCursorLeft(1);
         minitel.cursor();
-      } else if (key == 18) { // CTRL+R = RESET
+      } else if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
         modeVideotex();
         minitel.newXY(1, 1);
         minitel.newScreen();
@@ -519,20 +522,25 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("U"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH User: "); minitel.attributs(CARACTERE_CYAN); minitel.print(sshUser); clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("P"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH Pass: "); minitel.attributs(CARACTERE_CYAN); if (sshPass != NULL && sshPass != "") {printPassword(sshPass);} clearLineFromCursor(); minitel.println();
 
+  minitel.newXY(1,18); minitel.writeByte(0x5F); minitel.repeat(3);
+  minitel.newXY(1,19); minitel.print("{  }"); minitel.newXY(1,20); minitel.print("{  }");
+  minitel.newXY(1,21); minitel.writeByte(0x7E); minitel.repeat(3);
   minitel.newXY(2,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("S");
   minitel.newXY(6,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Save Preset");
-  minitel.rect(1,18,4,21);
 
   int delta=24;
+  minitel.newXY(1+delta,18); minitel.writeByte(0x5F); minitel.repeat(3);
+  minitel.newXY(1+delta,19); minitel.print("{  }"); minitel.newXY(1+delta,20); minitel.print("{  }");
+  minitel.newXY(1+delta,21); minitel.writeByte(0x7E); minitel.repeat(3);
   minitel.newXY(2+delta,19); minitel.attributs(CARACTERE_BLANC); minitel.attributs(DOUBLE_GRANDEUR); minitel.print("L");
   minitel.newXY(6+delta,19); minitel.attributs(DOUBLE_HAUTEUR); minitel.print("Load Preset");
-  minitel.rect(1+delta,18,4+delta,21);
 
   minitel.attributs(GRANDEUR_NORMALE);
   minitel.attributs(CARACTERE_JAUNE); 
   minitel.newXY(1,22);
   minitel.attributs(INVERSION_FOND); minitel.print(" SPACE "); minitel.attributs(FOND_NORMAL); minitel.print(" to connect   ");
   minitel.attributs(INVERSION_FOND); minitel.print(" CTRL+R "); minitel.attributs(FOND_NORMAL); minitel.print(" to restart");
+  minitel.newXY(24,23); minitel.print("or TS+CONNEXION");
 
   minitel.newXY(1,24); minitel.attributs(CARACTERE_ROUGE); minitel.print("(C) 2023 Louis H. - Francesco Sblendorio");
   minitel.attributs(CARACTERE_BLANC);
@@ -567,7 +575,7 @@ int setPrefs() {
     if (key != 0) {
       valid = true;
       debugPrintf("Key = %u\n", key);
-      if (key == 18) { // CTRL+R = RESET
+      if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
         valid = false;
         modeVideotex();
         minitel.newXY(1, 1);
@@ -640,7 +648,7 @@ void savePresets() {
     while ((key = minitel.getKeyCode()) == 0);
     if (key == 27 || key == 4933 || key == 4934) {
       break;
-    } else if (key == 18) { // CTRL+R = RESET
+    } else if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
       reset();
     } else if ( (key|32) >= 'a' && (key|32) <= 'a'+20-1) {
       int slot = (key|32) - 'a';
@@ -682,7 +690,7 @@ void loadPresets() {
     while ((key = minitel.getKeyCode()) == 0);
     if (key == 27 || key == 4933 || key == 4934) {
       break;
-    } else if (key == 18) { // CTRL+R = RESET
+    } else if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
       reset();
     } else if ( (key|32) >= 'a' && (key|32) <= 'a'+20-1) {
       int slot = (key|32) - 'a';
@@ -950,7 +958,7 @@ void sshTask(void *pvParameters) {
     if (key == 0) {
       vTaskDelay(50/portTICK_PERIOD_MS);
       continue;
-    } else if (key == 18) { // CTRL+R = RESET
+    } else if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
       if (!col80 && prestel) teletelMode();
       break;
     }
