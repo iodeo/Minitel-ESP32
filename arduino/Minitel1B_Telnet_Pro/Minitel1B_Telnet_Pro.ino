@@ -919,7 +919,7 @@ void sshTask(void *pvParameters) {
   
   // Open ssh session
   debugPrintf("  Connecting to %s as %s\n", host.c_str(), sshUser.c_str());
-  bool isOpen = sshClient.begin(host.c_str(), sshUser.c_str(), sshPass.c_str());
+  bool isOpen = sshClient.begin(host.c_str(), port, sshUser.c_str(), sshPass.c_str());
   if (!isOpen) debugPrintf("  > SSH authentication failed\n");
   
   // Loop task
