@@ -4,9 +4,9 @@
 
 SSHClient::SSHClient() {}
 
-bool SSHClient::begin(const char* host, const char* username, const char* password) {
+bool SSHClient::begin(const char* host, const int port, const char* username, const char* password) {
     libssh_begin();
-    SSHStatus status = start_session(host, username, password);
+    SSHStatus status = start_session(host, port, username, password);
     if (status != SSHStatus::OK) return false;
     if (!open_channel()) return false;
     if (SSH_OK != interactive_shell_session()) return false;
@@ -83,7 +83,7 @@ void SSHClient::end() {
     close_session();
 }
 
-SSHClient::SSHStatus SSHClient::connect_ssh(const char *host, const char *user, const char *password, const int verbosity) {
+SSHClient::SSHStatus SSHClient::connect_ssh(const char *host, const int port, const char *user, const char *password, const int verbosity) {
     _session = ssh_new();
 
     if (_session == NULL) {
@@ -96,6 +96,11 @@ SSHClient::SSHStatus SSHClient::connect_ssh(const char *host, const char *user, 
     }
 
     if (ssh_options_set(_session, SSH_OPTIONS_HOST, host) < 0) {
+        ssh_free(_session);
+        return SSHStatus::GENERAL_ERROR;
+    }
+
+    if (ssh_options_set(_session, SSH_OPTIONS_PORT, &port) < 0) {
         ssh_free(_session);
         return SSHStatus::GENERAL_ERROR;
     }
@@ -160,8 +165,8 @@ int SSHClient::interactive_shell_session() {
     return ret;
 }
 
-SSHClient::SSHStatus SSHClient::start_session(const char *host, const char *user, const char *password) {
-    SSHStatus status = connect_ssh(host, user, password, SSH_LOG_NOLOG);
+SSHClient::SSHStatus SSHClient::start_session(const char *host, const int port, const char *user, const char *password) {
+    SSHStatus status = connect_ssh(host, port, user, password, SSH_LOG_NOLOG);
     if (status != SSHStatus::OK) {
         ssh_finalize();
     }
