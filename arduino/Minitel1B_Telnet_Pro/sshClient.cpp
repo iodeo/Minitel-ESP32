@@ -100,6 +100,7 @@ SSHClient::SSHStatus SSHClient::connect_ssh(const char *host, const int port, co
         return SSHStatus::GENERAL_ERROR;
     }
 
+    // https://github.com/ewpa/LibSSH-ESP32/blob/master/src/libssh/libssh.h#L376
     if (ssh_options_set(_session, SSH_OPTIONS_PORT, &port) < 0) {
         ssh_free(_session);
         return SSHStatus::GENERAL_ERROR;
