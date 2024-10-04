@@ -387,6 +387,10 @@ String inputString(String defaultValue, int& exitCode) {
 }
 
 String inputString(String defaultValue, int& exitCode, char padChar) {
+  return inputString(defaultValue, exitCode, padChar, NULL);
+}
+
+String inputString(String defaultValue, int& exitCode, char padChar, int (*httpHandler)(void)) {
   String out = defaultValue == NULL ? "" : defaultValue;
   minitel.print(out);
   minitel.cursor();
@@ -398,6 +402,15 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
            key == 27   || // ESC
            key == 3       // CTRL+C
          )) {
+
+    if (httpHandler != NULL) {
+      int handlerExitCode = httpHandler();
+      if (handlerExitCode) {
+        exitCode = 99;
+        return "";
+      }
+    }
+
     if (key != 0) {
       debugPrintf("Key = %u\n", key);
       String str = minitel.getString(key);
@@ -597,6 +610,10 @@ int setPrefs() {
 
   while (key != 32) {
 
+
+
+
+
     int wifiStatus = WiFi.status();
     if (!tryingConnect) {
       WiFi.begin(ssid.c_str(), password.c_str());
@@ -623,88 +640,7 @@ int setPrefs() {
       Serial.print("%");
     }
 
-    if (serverOn) {
-      WiFiClient client = server.available();
-      if (client) {
-        Serial.println("New Client.");
-        String currentLine = "";
-        postBody = "";
-        isBodyComplete = false;
-        int contentLength = -1;
-        while (client.connected()) {
-          if (client.available()) {
-            char c = client.read();
-            Serial.write(c);
-            header += c;
-            
-            if (c == '\n') {
-              if (currentLine.startsWith("Content-Length:")) {
-                contentLength = currentLine.substring(16).toInt();
-              }
-              if (currentLine.length() == 0) {
-                if (header.indexOf("POST") >= 0) {
-                  // Inizia a leggere il corpo del POST
-                  while (postBody.length() < contentLength) {
-                    if (client.available()) {
-                      char c = client.read();
-                      Serial.print("C=");Serial.println(c);
-                      postBody += c;
-                    }
-                  }
-                  isBodyComplete = true;
-                }
-                
-                client.println("HTTP/1.1 200 OK");
-                client.println("Content-type: text/html");
-                client.println("Connection: close");
-                client.println();
-
-                client.println("<!DOCTYPE HTML><html>");
-                client.println("<head><title>ESP32 Web Server</title></head><body>");
-                
-                if (header.indexOf("POST") >= 0 && isBodyComplete) {
-                  Serial.println("Received POST data:");
-                  Serial.println(postBody);
-                  client.println("<h2>Received POST data:</h2>");
-                  client.println("<pre>");
-                  client.println(postBody);
-                  client.println("</pre>");
-                  privKey = true;
-                  sshPrivKey = postBody;
-                  showPrefs();
-                } else if (header.indexOf("GET") >= 0) {
-                  client.println("<h2>GET request received</h2>");
-                }
-                
-                client.println("</body></html>");
-                client.println();
-                break;
-              } else {
-                currentLine = "";
-              }
-            } else if (c != '\r') {
-              currentLine += c;
-            }
-          }
-        }
-        
-        header = "";
-        client.stop();
-        Serial.println("Client disconnected.");
-        Serial.println("");
-      }
-
-    }
-
-
-
-
-
-
-
-
-
-
+    if (serverOn) if (WiFiClient client = server.available()) while (client.connected()) client.stop();
 
 
     valid = false;
@@ -728,7 +664,7 @@ int setPrefs() {
       } else if (key == '2') {
         setParameter(10, 5, password, true, false);
         if (password.length() <= 31) {
-          minitel.newXY(1,6);
+          minitel.newXY(1, 6);
           clearLineFromCursor();
         }
         tryingConnect = false;
@@ -737,7 +673,7 @@ int setPrefs() {
         showPrefs();
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
-        if (url.length() <= 40-9) {
+        if (url.length() <= 40 - 9) {
           minitel.newXY(1, 8);
           clearLineFromCursor();
         }
@@ -752,7 +688,7 @@ int setPrefs() {
       } else if (key == 'c' || key == 'C') {
         switchParameter(37, 9, prestel);
       } else if (key == '7') {
-        cycleConnectionType(14,13);
+        cycleConnectionType(14, 13);
       } else if (key == '8') {
         uint16_t temp = ping_ms;
         setIntParameter(14, 14, temp);
@@ -762,9 +698,13 @@ int setPrefs() {
       } else if (key == 'u' || key == 'U') {
         setParameter(14, 16, sshUser, false, true);
       } else if (key == 'p' || key == 'P') {
-        setParameter(14, 17, sshPass, true, true);
-        privKey = false;
-        sshPrivKey = "";
+        bool previousPrivKey = privKey;
+        int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
+        Serial.print("= EXITCODE:"); Serial.println(inputExitCode);
+        if (inputExitCode != 99) {
+          privKey = false;
+          sshPrivKey = "";
+        }
       } else if (key == 's' || key == 'S') {
         savePresets();
       } else if (key == 'l' || key == 'L') {
@@ -774,6 +714,7 @@ int setPrefs() {
       } else {
         valid = false;
       }
+      Serial.print("= NUOVO PRIKEY:"); Serial.println(privKey);
     }
     if (valid) {
       savePrefs();
@@ -782,7 +723,8 @@ int setPrefs() {
   }
   server.end();
   serverOn = false;
-  minitel.newXY(1, 0); minitel.cancel();
+  minitel.newXY(1, 0);
+  minitel.cancel();
   minitel.newScreen();
   return 0;
 }
@@ -902,6 +844,10 @@ void switchParameter(int x, int y, bool &destination) {
 }
 
 int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
+  return setParameter(x, y, destination, mask, allowBlank, NULL);
+}
+
+int setParameter(int x, int y, String &destination, bool mask, bool allowBlank, int (*httpHandler)(void)) {
   minitel.newXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
   int len = 41 - x - numberOfChars(destination);
@@ -910,7 +856,7 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
   for (int i = 0; i < len; ++i) minitel.print(".");
   minitel.newXY(x, y);
   int exitCode = 0;
-  String temp = inputString(destination, exitCode, '.');
+  String temp = inputString(destination, exitCode, '.', httpHandler);
   if (!exitCode) {
     if (allowBlank) {
       destination = String(temp);
@@ -918,6 +864,8 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
       destination = String(temp);
     }
   }
+  if (exitCode == 99) return exitCode;
+  
   minitel.newXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
     if (!allowBlank) minitel.print("-undefined-");
@@ -1563,6 +1511,84 @@ void showHelp() {
   showPrefs();
 }
 
+int manageHttpConnection() {
+  if (serverOn) {
+    WiFiClient client = server.available();
+    if (client) {
+      Serial.println("New Client.");
+      String currentLine = "";
+      postBody = "";
+      isBodyComplete = false;
+      int contentLength = -1;
+      while (client.connected()) {
+        if (client.available()) {
+          char c = client.read();
+          Serial.write(c);
+          header += c;
+
+          if (c == '\n') {
+            if (currentLine.startsWith("Content-Length:")) {
+              contentLength = currentLine.substring(16).toInt();
+            }
+            if (currentLine.length() == 0) {
+              if (header.indexOf("POST") >= 0) {
+                // Inizia a leggere il corpo del POST
+                while (postBody.length() < contentLength) {
+                  if (client.available()) {
+                    char c = client.read();
+                    Serial.print("C=");
+                    Serial.println(c);
+                    postBody += c;
+                  }
+                }
+                isBodyComplete = true;
+              }
+
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-type: text/html");
+              client.println("Connection: close");
+              client.println();
+
+              client.println("<!DOCTYPE HTML><html>");
+              client.println("<head><title>ESP32 Web Server</title></head><body>");
+
+              if (header.indexOf("POST") >= 0 && isBodyComplete) {
+                Serial.println("Received POST data:");
+                Serial.println(postBody);
+                client.println("<h2>Received POST data:</h2>");
+                client.println("<pre>");
+                client.println(postBody);
+                client.println("</pre>");
+                privKey = true;
+                sshPrivKey = postBody;
+                showPrefs();
+              } else if (header.indexOf("GET") >= 0) {
+                client.println("<h2>GET request received</h2>");
+              }
+
+              client.println("</body></html>");
+              client.println();
+              break;
+            } else {
+              currentLine = "";
+            }
+          } else if (c != '\r') {
+            currentLine += c;
+          }
+        }
+      }
+
+      header = "";
+      client.stop();
+      Serial.println("Client disconnected.");
+      Serial.println("");
+      return 1;
+    }
+  }
+  return 0;
+}
+
 void WiFiDisconnect() {
 
 }
+
