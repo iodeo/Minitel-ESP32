@@ -19,10 +19,10 @@ class SSHClient {
         GENERAL_ERROR
     };
 
-    bool begin(const char *host, const int port, const char *user, const char *password);
-    SSHStatus connect_ssh(const char *host, const int port, const char *user, const char *password, const int verbosity);
+    bool begin(const char *host, const int port, const char *user, const char *password, bool privKey, const char *sshPrivKey);
+    SSHStatus connect_ssh(const char *host, const int port, const char *user, const char *password, bool privKey, const char *sshPrivKey, const int verbosity);
 //    bool poll(Minitel* minitel);
-    SSHStatus start_session(const char *host, const int port, const char *user, const char *password);
+    SSHStatus start_session(const char *host, const int port, const char *user, const char *password, bool privKey, const char *sshPrivKey);
     void close_session();
     int interactive_shell_session();
     void close_channel();
