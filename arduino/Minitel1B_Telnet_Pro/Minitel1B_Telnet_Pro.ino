@@ -1523,7 +1523,7 @@ int manageHttpConnection() {
               if (header.indexOf("POST") >= 0 && isBodyComplete) {
                 client.println("<h2>Received POST data:</h2>");
                 client.println("<pre>");
-                client.println(postBody);
+                client.println("Private Key Injected");
                 client.println("</pre>");
                 privKey = true;
                 sshPrivKey = postBody;
