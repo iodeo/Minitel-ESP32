@@ -536,7 +536,7 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("U"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH User: "); minitel.attributs(CARACTERE_CYAN); minitel.print(sshUser); clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("P"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH Pass: "); minitel.attributs(CARACTERE_CYAN);
   if (privKey) {
-    minitel.print("-- privKey --"); 
+    minitel.print("-- privKey --");
   } else {
     if (sshPass != NULL && sshPass != "") {printPassword(sshPass);} 
   }
@@ -669,10 +669,18 @@ int setPrefs() {
 
         bool previousPrivKey = privKey;
         int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
-        if (inputExitCode != 99) {
+        if (inputExitCode == 0) {
           privKey = false;
           sshPrivKey = "";
         }
+
+        if (inputExitCode == 1 && privKey) {
+          minitel.newXY(14,17);
+          minitel.attributs(CARACTERE_CYAN);
+          minitel.print("-- privKey --"); 
+          clearLineFromCursor(); minitel.println();
+        }
+
         server.end();
         serverOn = false;
       } else if (key == 's' || key == 'S') {
@@ -1493,7 +1501,6 @@ int manageHttpConnection() {
       while (client.connected()) {
         if (client.available()) {
           char c = client.read();
-          Serial.write(c);
           header += c;
 
           if (c == '\n') {
