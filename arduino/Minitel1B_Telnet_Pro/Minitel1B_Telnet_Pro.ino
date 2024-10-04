@@ -1212,6 +1212,7 @@ void writePresets() {
     doc["ping_ms"] = presets[i].ping_ms;
     doc["protocol"] = presets[i].protocol;
     doc["sshUser"] = presets[i].sshUser;
+    doc["sshPass"] = presets[i].sshPass;
     doc["sshPrivKey"] = presets[i].sshPrivKey;
 
     if (serializeJson(doc, file) == 0) {
