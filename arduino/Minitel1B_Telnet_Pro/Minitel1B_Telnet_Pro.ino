@@ -12,7 +12,7 @@
 
 #define MINITEL_PORT Serial2
 
-#define DEBUG true
+//#define DEBUG true
 #define DEBUG_PORT Serial
 
 #if DEBUG // Debug enabled
