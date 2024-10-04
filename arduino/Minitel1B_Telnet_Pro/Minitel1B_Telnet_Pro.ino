@@ -309,7 +309,7 @@ void loopTelnet() {
     byte tmp = minitel.readByte();
     if (tmp == 18 || (functionKey && tmp == 0x49)) { // CTRL+R = RESET ou TS+CONNEXION
       telnet.stop();
-      WiFiDisconnect();
+      
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
@@ -846,6 +846,8 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank, 
   minitel.newXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
     if (!allowBlank) minitel.print("-undefined-");
+  } else if (exitCode == 1 && privKey) {
+    // do nothing
   } else {
     if (mask) {
       minitel.graphicMode();
@@ -1091,7 +1093,7 @@ void sshTask(void *pvParameters) {
 
   // Reinit minitel and Self delete ssh task 
   debugPrintf("\n> SSH task end\n");
-  WiFiDisconnect();
+
   modeVideotex();
   minitel.newXY(1, 1);
   minitel.newScreen();
@@ -1111,7 +1113,6 @@ void loopWebsocket() {
   if (key != 0) {
     if (key == 18) { // CTRL + R = RESET
       webSocket.disconnect();
-      WiFiDisconnect();
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
@@ -1142,7 +1143,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       minitel.println("DISCONNECTING...");
       delay(3000);
       webSocket.disconnect();
-      WiFiDisconnect();
+      // WiFi.disconnect();
       if (!col80 && prestel) teletelMode();
       reset();
 */
@@ -1561,8 +1562,3 @@ int manageHttpConnection() {
   }
   return 0;
 }
-
-void WiFiDisconnect() {
-
-}
-
