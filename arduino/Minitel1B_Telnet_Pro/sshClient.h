@@ -37,6 +37,8 @@ class SSHClient {
     private:
     ssh_session _session;
     ssh_channel _channel;
+    ssh_key privkey = NULL;
+
     char _readBuffer[256] = {'\0'};
 //    size_t getMinitelInput(unsigned long key, char* buffer);
 };
