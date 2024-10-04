@@ -84,7 +84,7 @@ int speed;
 String minitelIP(DISCONNECTED);
 
 WiFiServer server(80);
-bool serverOn = true;
+bool serverOn = false;
 String header;
 String postBody;
 bool isBodyComplete = false;
@@ -169,29 +169,7 @@ void setup() {
       separateUrl(url);
 
       minitel.capitalMode();
-      minitel.println("Connecting, please wait. CTRL+R to reset");
-  
-      /*
-      debugPrintf("\nWiFi Connecting to %s ", ssid.c_str());
-      WiFiDisconnect();
-      delay(100);
-      WiFi.begin(ssid.c_str(), password.c_str());
-      while (WiFi.status() != WL_CONNECTED || (!WiFi.localIP())) {
-        delay(500);
-        debugPrint(".");
-        unsigned long key = minitel.getKeyCode();
-        if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
-          minitel.newXY(1, 1);
-          minitel.newScreen();
-          WiFiDisconnect();
-          reset();
-        }
-      }
-      debugPrintln();
-      debugPrint("WiFi connected with local IP: ");
-      debugPrintln(WiFi.localIP());
-      minitel.print("Connected with IP ");
-      minitel.println(WiFi.localIP().toString());*/
+      minitel.println("Connecting, please wait.");
     }
 
 
@@ -500,7 +478,7 @@ void savePrefs() {
   prefs.begin("telnet-pro", false);
   if (prefs.getString("ssid",     "") != ssid)     prefs.putString("ssid", ssid);
   if (prefs.getString("password", "") != password) prefs.putString("password", password);
-  if (prefs.getString("url",      "") != url)     prefs.putString("url", url);
+  if (prefs.getString("url",      "") != url)      prefs.putString("url", url);
   if (prefs.getBool("scroll",    false) != scroll)     prefs.putBool("scroll", scroll);
   if (prefs.getBool("echo",      false) != echo)       prefs.putBool("echo",   echo);
   if (prefs.getBool("col80",     false) != col80)      prefs.putBool("col80",  col80);
@@ -514,6 +492,12 @@ void savePrefs() {
   if (prefs.getString("sshPass", "")    != sshPass)     prefs.putString("sshPass",    sshPass);
   if (prefs.getString("sshPrivKey", "") != sshPrivKey)  prefs.putString("sshPrivKey", sshPrivKey);
   prefs.end();
+}
+
+void showIP() {
+  minitel.newXY(1,3); minitel.attributs(CARACTERE_ROUGE);
+  for (int k=0; k<40-minitelIP.length(); k++) minitel.print(" ");
+  minitel.print(minitelIP);
 }
 
 void showPrefs() {
@@ -610,37 +594,17 @@ int setPrefs() {
 
   while (key != 32) {
 
-
-
-
-
     int wifiStatus = WiFi.status();
     if (!tryingConnect) {
       WiFi.begin(ssid.c_str(), password.c_str());
       tryingConnect = true;
-      serverOn = false;
-      server.end();
     } else if (minitelIP == DISCONNECTED && wifiStatus == WL_CONNECTED) {
-      Serial.println("==============================");
-      Serial.println("==============================");
-      Serial.println("==============================");
-      Serial.println("==============================");
       minitelIP = WiFi.localIP().toString();
-      Serial.println(WiFi.localIP());
-      Serial.println(minitelIP);
-      Serial.println("==============================");
-      Serial.println("==============================");
-      Serial.println("==============================");
-      Serial.println("==============================");
-      server.begin();
-      serverOn = true;
-      showPrefs();
+      showIP();
     } else if (minitelIP == DISCONNECTED && wifiStatus != WL_CONNECTED) {
       delay(100);
       Serial.print("%");
     }
-
-    if (serverOn) if (WiFiClient client = server.available()) while (client.connected()) client.stop();
 
 
     valid = false;
@@ -660,7 +624,7 @@ int setPrefs() {
         tryingConnect = false;
         minitelIP = DISCONNECTED;
         WiFi.disconnect();
-        showPrefs();
+        showIP();
       } else if (key == '2') {
         setParameter(10, 5, password, true, false);
         if (password.length() <= 31) {
@@ -670,7 +634,7 @@ int setPrefs() {
         tryingConnect = false;
         minitelIP = DISCONNECTED;
         WiFi.disconnect();
-        showPrefs();
+        showIP();
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
         if (url.length() <= 40 - 9) {
@@ -698,13 +662,19 @@ int setPrefs() {
       } else if (key == 'u' || key == 'U') {
         setParameter(14, 16, sshUser, false, true);
       } else if (key == 'p' || key == 'P') {
+        if (!serverOn && WiFi.status() == WL_CONNECTED) {
+          serverOn = true;
+          server.begin();
+        }
+
         bool previousPrivKey = privKey;
         int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
-        Serial.print("= EXITCODE:"); Serial.println(inputExitCode);
         if (inputExitCode != 99) {
           privKey = false;
           sshPrivKey = "";
         }
+        server.end();
+        serverOn = false;
       } else if (key == 's' || key == 'S') {
         savePresets();
       } else if (key == 'l' || key == 'L') {
@@ -714,14 +684,13 @@ int setPrefs() {
       } else {
         valid = false;
       }
-      Serial.print("= NUOVO PRIKEY:"); Serial.println(privKey);
     }
     if (valid) {
       savePrefs();
     }
     key = minitel.getKeyCode();
   }
-  server.end();
+  //server.end();
   serverOn = false;
   minitel.newXY(1, 0);
   minitel.cancel();
@@ -1512,10 +1481,11 @@ void showHelp() {
 }
 
 int manageHttpConnection() {
+
   if (serverOn) {
     WiFiClient client = server.available();
     if (client) {
-      Serial.println("New Client.");
+      debugPrintln("New Client.");
       String currentLine = "";
       postBody = "";
       isBodyComplete = false;
@@ -1536,8 +1506,6 @@ int manageHttpConnection() {
                 while (postBody.length() < contentLength) {
                   if (client.available()) {
                     char c = client.read();
-                    Serial.print("C=");
-                    Serial.println(c);
                     postBody += c;
                   }
                 }
@@ -1553,8 +1521,6 @@ int manageHttpConnection() {
               client.println("<head><title>ESP32 Web Server</title></head><body>");
 
               if (header.indexOf("POST") >= 0 && isBodyComplete) {
-                Serial.println("Received POST data:");
-                Serial.println(postBody);
                 client.println("<h2>Received POST data:</h2>");
                 client.println("<pre>");
                 client.println(postBody);
@@ -1580,8 +1546,8 @@ int manageHttpConnection() {
 
       header = "";
       client.stop();
-      Serial.println("Client disconnected.");
-      Serial.println("");
+      debugPrintln("Client disconnected.");
+      debugPrintln("");
       return 1;
     }
   }
