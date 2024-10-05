@@ -853,7 +853,7 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank, 
   minitel.newXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
     if (!allowBlank) minitel.print("-undefined-");
-  } else if (exitCode == 1 && privKey) {
+  } else if (httpHandler && exitCode == 1 && privKey) {
     // do nothing
   } else {
     if (mask) {
