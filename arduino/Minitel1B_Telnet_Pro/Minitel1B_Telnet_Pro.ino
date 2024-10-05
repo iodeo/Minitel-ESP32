@@ -12,7 +12,7 @@
 
 #define MINITEL_PORT Serial2
 
-//#define DEBUG true
+// #define DEBUG true
 #define DEBUG_PORT Serial
 
 #if DEBUG // Debug enabled
@@ -57,6 +57,8 @@ String protocol("");
 String sshUser("");
 String sshPass("");
 String sshPrivKey("");
+
+unsigned long startMs = 0;
 
 byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH 3=Serial
 bool ssl = false;
@@ -587,25 +589,29 @@ void printStringValue(String s) {
 }
 
 
+#define THRESHOLD 10000
+
 int setPrefs() {
   unsigned long key = minitel.getKeyCode();
   bool valid = false;
   bool tryingConnect = false;
 
+  startMs = millis();
+
   while (key != 32) {
 
-    int wifiStatus = WiFi.status();
-    if (!tryingConnect) {
-      WiFi.begin(ssid.c_str(), password.c_str());
-      tryingConnect = true;
-    } else if (minitelIP == DISCONNECTED && wifiStatus == WL_CONNECTED) {
-      minitelIP = WiFi.localIP().toString();
-      showIP();
-    } else if (minitelIP == DISCONNECTED && wifiStatus != WL_CONNECTED) {
-      delay(100);
-      Serial.print("%");
+    if (millis() - startMs < THRESHOLD) {
+      if (!tryingConnect) {
+        WiFi.begin(ssid.c_str(), password.c_str());
+        tryingConnect = true;
+      } else if (minitelIP == DISCONNECTED && WiFi.status() == WL_CONNECTED) {
+        minitelIP = WiFi.localIP().toString();
+        showIP();
+      } else if (minitelIP == DISCONNECTED && WiFi.status() != WL_CONNECTED) {
+        delay(200);
+        Serial.print("%");
+      }
     }
-
 
     valid = false;
     if (key != 0) {
@@ -622,6 +628,7 @@ int setPrefs() {
       } else if (key == '1') {
         setParameter(10, 4, ssid, false, false);
         tryingConnect = false;
+        startMs = millis();
         minitelIP = DISCONNECTED;
         WiFi.disconnect();
         showIP();
@@ -632,6 +639,7 @@ int setPrefs() {
           clearLineFromCursor();
         }
         tryingConnect = false;
+        startMs = millis();
         minitelIP = DISCONNECTED;
         WiFi.disconnect();
         showIP();
@@ -663,11 +671,10 @@ int setPrefs() {
         setParameter(14, 16, sshUser, false, true);
       } else if (key == 'p' || key == 'P') {
         if (!serverOn && WiFi.status() == WL_CONNECTED) {
-          serverOn = true;
           server.begin();
+          serverOn = true;
         }
 
-        bool previousPrivKey = privKey;
         int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
         if (inputExitCode == 0) {
           privKey = false;
@@ -681,8 +688,8 @@ int setPrefs() {
           clearLineFromCursor(); minitel.println();
         }
 
-        server.end();
         serverOn = false;
+        server.end();
       } else if (key == 's' || key == 'S') {
         savePresets();
       } else if (key == 'l' || key == 'L') {
