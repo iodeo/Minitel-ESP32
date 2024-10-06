@@ -604,12 +604,14 @@ int setPrefs() {
       if (!tryingConnect) {
         WiFi.begin(ssid.c_str(), password.c_str());
         tryingConnect = true;
-      } else if (minitelIP == DISCONNECTED && WiFi.status() == WL_CONNECTED) {
-        minitelIP = WiFi.localIP().toString();
-        showIP();
-      } else if (minitelIP == DISCONNECTED && WiFi.status() != WL_CONNECTED) {
-        delay(200);
-        Serial.print("%");
+      } else if (minitelIP == DISCONNECTED) {
+        if (WiFi.status() == WL_CONNECTED) {
+          minitelIP = WiFi.localIP().toString();
+          showIP();
+        } else {
+          delay(200);
+          Serial.print("%");
+        }
       }
     }
 
