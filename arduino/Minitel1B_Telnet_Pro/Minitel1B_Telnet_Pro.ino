@@ -15,6 +15,18 @@
 #define WIFI_ABORTED 3
 #define WIFI_CONNECTED 4
 
+#define HTTP_SERVER_HEADER_MAX_LENGTH 512
+#define HTTP_SERVER_BODY_MAX_LENGTH   512 // 4096 bits
+
+#define HTTP_SERVER_READY            2
+#define HTTP_SERVER_CLIENT_CONNECTED 3
+#define HTTP_SERVER_HEADER_OVERSIZED 4
+#define HTTP_SERVER_BODY_OVERSIZED   5
+#define HTTP_SERVER_BODY_COMPLETE    6
+#define HTTP_SERVER_GET_RECEIVED     7
+#define HTTP_SERVER_UNKNOWN_METHOD   8
+#define HTTP_SERVER_CLOSED           9
+
 #define MINITEL_PORT Serial2
 
 // #define DEBUG true
@@ -88,10 +100,7 @@ int speed;
 uint8_t wifiStatus;
 
 WiFiServer server(80);
-bool serverOn = false;
-String header;
-String postBody;
-bool isBodyComplete = false;
+uint8_t serverStatus = HTTP_SERVER_CLOSED;
 
 void initFS() {
   boolean ok = SPIFFS.begin();
@@ -679,9 +688,10 @@ int setPrefs() {
       } else if (key == 'u' || key == 'U') {
         setParameter(14, 16, sshUser, false, true);
       } else if (key == 'p' || key == 'P') {
-        if (!serverOn && WiFi.status() == WL_CONNECTED) {
+        if (serverStatus == HTTP_SERVER_CLOSED && WiFi.status() == WL_CONNECTED) {
+          debugPrintln("Server begin");
           server.begin();
-          serverOn = true;
+          serverStatus = HTTP_SERVER_READY;
         }
 
         int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
@@ -697,7 +707,8 @@ int setPrefs() {
           clearLineFromCursor(); minitel.println();
         }
 
-        serverOn = false;
+        debugPrintln("Server end");
+        serverStatus = HTTP_SERVER_CLOSED;
         server.end();
       } else if (key == 's' || key == 'S') {
         savePresets();
@@ -715,7 +726,8 @@ int setPrefs() {
     key = minitel.getKeyCode();
   }
   //server.end();
-  serverOn = false;
+  debugPrintln("Server end");
+  serverStatus = HTTP_SERVER_CLOSED;
   minitel.newXY(1, 0);
   minitel.cancel();
   minitel.newScreen();
@@ -1507,74 +1519,87 @@ void showHelp() {
 }
 
 int manageHttpConnection() {
+  String header = "";
+  String postBody = "";
 
-  if (serverOn) {
-    WiFiClient client = server.available();
-    if (client) {
-      debugPrintln("New Client.");
-      String currentLine = "";
-      postBody = "";
-      isBodyComplete = false;
-      int contentLength = -1;
-      while (client.connected()) {
-        if (client.available()) {
-          char c = client.read();
-          header += c;
+  if (serverStatus != HTTP_SERVER_READY) return 0;
 
-          if (c == '\n') {
-            if (currentLine.startsWith("Content-Length:")) {
-              contentLength = currentLine.substring(16).toInt();
-            }
-            if (currentLine.length() == 0) {
-              if (header.indexOf("POST") >= 0) {
-                // Inizia a leggere il corpo del POST
-                while (postBody.length() < contentLength) {
-                  if (client.available()) {
-                    char c = client.read();
-                    postBody += c;
-                  }
-                }
-                isBodyComplete = true;
-              }
+  WiFiClient client = server.available();
+  if (!client) return 0;
 
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type: text/html");
-              client.println("Connection: close");
-              client.println();
-
-              client.println("<!DOCTYPE HTML><html>");
-              client.println("<head><title>ESP32 Web Server</title></head><body>");
-
-              if (header.indexOf("POST") >= 0 && isBodyComplete) {
-                client.println("<h2>Received POST data:</h2>");
-                client.println("<pre>");
-                client.println("Private Key Injected");
-                client.println("</pre>");
-                privKey = true;
-                sshPrivKey = postBody;
-                showPrefs();
-              } else if (header.indexOf("GET") >= 0) {
-                client.println("<h2>GET request received</h2>");
-              }
-
-              client.println("</body></html>");
-              client.println();
-              break;
-            } else {
-              currentLine = "";
-            }
-          } else if (c != '\r') {
-            currentLine += c;
-          }
-        }
+  serverStatus = HTTP_SERVER_CLIENT_CONNECTED;
+  debugPrintln("New Client.");
+  String currentLine = "";
+  int contentLength = -1;
+  while (client.connected()) {
+    if (serverStatus != HTTP_SERVER_CLIENT_CONNECTED) break;
+    if (client.available()) {
+      char c = client.read();
+      header += c;
+      if (header.length() > HTTP_SERVER_HEADER_MAX_LENGTH-1) {
+        debugPrintln("header too big");
+        serverStatus = HTTP_SERVER_HEADER_OVERSIZED;
       }
 
-      header = "";
-      client.stop();
-      debugPrintln("Client disconnected.");
-      debugPrintln("");
-      return 1;
+      if (c == '\n') {
+        if (currentLine.startsWith("Content-Length:")) {
+          contentLength = currentLine.substring(16).toInt();
+        }
+        if (contentLength > HTTP_SERVER_BODY_MAX_LENGTH) {
+          debugPrintln("body too big");
+          serverStatus = HTTP_SERVER_BODY_OVERSIZED;
+        }
+        if (currentLine.length() == 0) {
+          if (header.indexOf("POST") >= 0) {
+            // Inizia a leggere il corpo del POST
+            while (postBody.length() < contentLength) {
+              if (client.available()) {
+                char c = client.read();
+                postBody += c;
+              }
+            }
+            serverStatus = HTTP_SERVER_BODY_COMPLETE;
+          } else if (header.indexOf("GET") >= 0) {
+            serverStatus = HTTP_SERVER_GET_RECEIVED;
+            } else {
+              serverStatus = HTTP_SERVER_UNKNOWN_METHOD;
+            }
+        } else {
+          currentLine = "";
+        }
+      } else if (c != '\r') {
+        currentLine += c;
+      }
     }
   }
-  return 0;
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type: text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println("<!DOCTYPE HTML><html>");
+  client.println("<head><title>ESP32 Web Server</title></head><body>");
+  if (serverStatus == HTTP_SERVER_HEADER_OVERSIZED) {
+    client.println("<h2>Header is too big (" + String(HTTP_SERVER_HEADER_MAX_LENGTH) + " bytes max</h2>");
+  }
+  if (serverStatus == HTTP_SERVER_BODY_OVERSIZED) {
+    client.println("<h2>Body is too big (" + String(HTTP_SERVER_BODY_MAX_LENGTH) + " bytes max</h2>");
+  }
+  if (serverStatus == HTTP_SERVER_BODY_COMPLETE) {
+    client.println("<h2>Received POST data:</h2>");
+    client.println("<pre>");
+    client.println("Private Key Injected");
+    client.println("</pre>");
+    privKey = true;
+    sshPrivKey = postBody;
+    showPrefs();
+  } else if (serverStatus == HTTP_SERVER_GET_RECEIVED) {
+    client.println("<h2>GET request received</h2>");
+  }
+  client.println("</body></html>");
+  client.println();
+
+  client.stop();
+  debugPrintln("Client disconnected.");
+  debugPrintln("");
+  return (serverStatus == HTTP_SERVER_BODY_COMPLETE);
 }
