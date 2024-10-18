@@ -7,8 +7,13 @@
 #include <WebSocketsClient.h> // src: https://github.com/Links2004/arduinoWebSockets.git
 #include "sshClient.h"
 
-#define DISCONNECTED "NO SIGNAL"
 #define MINITEL_BAUD_TRY  4800
+
+#define WIFI_TIMEOUT 10000
+#define WIFI_BEGIN 1
+#define WIFI_WAITING 2
+#define WIFI_ABORTED 3
+#define WIFI_CONNECTED 4
 
 #define MINITEL_PORT Serial2
 
@@ -25,7 +30,6 @@
 #define debugPrint(x)
 #define debugPrintln(x)
 #define debugPrintf(...)
-
 #endif
 
 Minitel minitel(MINITEL_PORT);
@@ -58,8 +62,6 @@ String sshUser("");
 String sshPass("");
 String sshPrivKey("");
 
-unsigned long startMs = 0;
-
 byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH 3=Serial
 bool ssl = false;
 
@@ -83,7 +85,7 @@ typedef struct {
 
 Preset presets[20];
 int speed;
-String minitelIP(DISCONNECTED);
+uint8_t wifiStatus;
 
 WiFiServer server(80);
 bool serverOn = false;
@@ -497,10 +499,18 @@ void savePrefs() {
   prefs.end();
 }
 
-void showIP() {
-  minitel.newXY(1,3); minitel.attributs(CARACTERE_ROUGE);
-  for (int k=0; k<40-minitelIP.length(); k++) minitel.print(" ");
-  minitel.print(minitelIP);
+void showWifiStatus() {
+  String message;
+  switch (wifiStatus) {
+    case WIFI_WAITING:   message = "CONNECT"; break;
+    case WIFI_CONNECTED: message = WiFi.localIP().toString(); break;
+    default:             message = "NO SIGNAL"; break;
+  }
+  minitel.newXY(21,3); minitel.attributs(CARACTERE_ROUGE);
+  if (wifiStatus == WIFI_WAITING) minitel.attributs(CLIGNOTEMENT);
+  //else minitel.attributs(FIXE);
+  for (int k=0; k<20-message.length(); k++) minitel.printChar(' ');
+  minitel.print(message);
 }
 
 void showPrefs() {
@@ -514,7 +524,7 @@ void showPrefs() {
   minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.print("  Minitel Telnet Pro  ");
   minitel.newXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
-  minitel.newXY(41-minitelIP.length(),3); minitel.attributs(CARACTERE_ROUGE); minitel.print(minitelIP);
+  showWifiStatus();
   minitel.newXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(password); clearLineFromCursor(); minitel.println();
@@ -589,30 +599,36 @@ void printStringValue(String s) {
   }
 }
 
-
-#define THRESHOLD 10000
-
 int setPrefs() {
   unsigned long key = minitel.getKeyCode();
+  unsigned long startMs;
+  wifiStatus = WIFI_BEGIN;
   bool valid = false;
-  bool tryingConnect = false;
-
-  startMs = millis();
+  int code = 0;
 
   while (key != 32) {
 
-    if (millis() - startMs < THRESHOLD) {
-      if (!tryingConnect) {
-        WiFi.begin(ssid.c_str(), password.c_str());
-        tryingConnect = true;
-      } else if (minitelIP == DISCONNECTED) {
-        if (WiFi.status() == WL_CONNECTED) {
-          minitelIP = WiFi.localIP().toString();
-          showIP();
-        } else {
-          delay(200);
-          Serial.print("%");
-        }
+    if (wifiStatus == WIFI_BEGIN) {
+      wifiStatus = WIFI_WAITING;
+      debugPrintln("Connecting to WiFi");
+      showWifiStatus();
+      WiFi.disconnect();
+      WiFi.begin(ssid.c_str(), password.c_str());
+      startMs = millis();
+    }
+
+    if (wifiStatus == WIFI_WAITING) {
+      if (WiFi.status() == WL_CONNECTED) {
+        wifiStatus = WIFI_CONNECTED;
+        debugPrintln(" DONE");
+        showWifiStatus();
+      } else if (millis() - startMs > WIFI_TIMEOUT) {
+        wifiStatus = WIFI_ABORTED;
+        debugPrintln(" FAILED");
+        showWifiStatus();
+      } else {
+        delay(200);
+        debugPrint('%');
       }
     }
 
@@ -629,23 +645,13 @@ int setPrefs() {
         minitel.pageMode();
         reset();
       } else if (key == '1') {
-        setParameter(10, 4, ssid, false, false);
-        tryingConnect = false;
-        startMs = millis();
-        minitelIP = DISCONNECTED;
-        WiFi.disconnect();
-        showIP();
+        if (setParameter(10, 4, ssid, false, false) == 0) wifiStatus = WIFI_BEGIN;
       } else if (key == '2') {
-        setParameter(10, 5, password, true, false);
+        if (setParameter(10, 5, password, true, false) == 0) wifiStatus = WIFI_BEGIN;
         if (password.length() <= 31) {
           minitel.newXY(1, 6);
           clearLineFromCursor();
         }
-        tryingConnect = false;
-        startMs = millis();
-        minitelIP = DISCONNECTED;
-        WiFi.disconnect();
-        showIP();
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
         if (url.length() <= 40 - 9) {
