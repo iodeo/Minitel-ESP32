@@ -377,10 +377,11 @@ String inputString(String defaultValue, int& exitCode, char padChar, int (*httpH
   unsigned long key = minitel.getKeyCode();
   while (!(
            key == 4929 || // Invio
-           key == 13   ||
-           key == 10   ||
+           key == 13   || // CR
+           key == 10   || // LF
            key == 27   || // ESC
-           key == 3       // CTRL+C
+           key == 3    || // CTRL+C
+           key == 4934    // Sommaire
          )) {
 
     if (httpHandler != NULL) {
@@ -432,7 +433,7 @@ String inputString(String defaultValue, int& exitCode, char padChar, int (*httpH
     }
     key = minitel.getKeyCode();
   }
-  if (key == 3 || key == 27)
+  if (key == 3 || key == 27 || key == 4934)
     exitCode = 1;
   else
     exitCode = 0;
