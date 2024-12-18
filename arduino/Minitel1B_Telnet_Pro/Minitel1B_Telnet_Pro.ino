@@ -1139,7 +1139,7 @@ void loopWebsocket() {
   // Minitel -> Websocket
   uint32_t key = minitel.getKeyCode(false);
   if (key != 0) {
-    if (key == 18) { // CTRL + R = RESET
+    if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
       webSocket.disconnect();
       if (!col80 && prestel) teletelMode();
       modeVideotex();
