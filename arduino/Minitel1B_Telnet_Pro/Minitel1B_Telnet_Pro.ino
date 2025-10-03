@@ -16,7 +16,7 @@
 #define WIFI_CONNECTED 4
 
 #define HTTP_SERVER_HEADER_MAX_LENGTH 512
-#define HTTP_SERVER_BODY_MAX_LENGTH   512 // 4096 bits
+#define HTTP_SERVER_BODY_MAX_LENGTH   4096 // support for 4096 bit RSA private keys
 
 #define HTTP_SERVER_READY            2
 #define HTTP_SERVER_CLIENT_CONNECTED 3
@@ -134,7 +134,7 @@ void setup() {
   debugBegin(115200);
   debugPrintln("----------------");
   debugPrintln("Debug ready");
-  debugPrintf("RESET_REASON = %d\n", ESP_RST_SW, reset_reason);
+  debugPrintf("RESET_REASON = %d\n", reset_reason);
 
   // Minitel setup
   // (don't) teletelMode();
@@ -1579,10 +1579,10 @@ int manageHttpConnection() {
   client.println("<!DOCTYPE HTML><html>");
   client.println("<head><title>ESP32 Web Server</title></head><body>");
   if (serverStatus == HTTP_SERVER_HEADER_OVERSIZED) {
-    client.println("<h2>Header is too big (" + String(HTTP_SERVER_HEADER_MAX_LENGTH) + " bytes max</h2>");
+    client.println("<h2>Header is too big (" + String(HTTP_SERVER_HEADER_MAX_LENGTH) + " bytes max)</h2>");
   }
   if (serverStatus == HTTP_SERVER_BODY_OVERSIZED) {
-    client.println("<h2>Body is too big (" + String(HTTP_SERVER_BODY_MAX_LENGTH) + " bytes max</h2>");
+    client.println("<h2>Body is too big (" + String(HTTP_SERVER_BODY_MAX_LENGTH) + " bytes max)</h2>");
   }
   if (serverStatus == HTTP_SERVER_BODY_COMPLETE) {
     client.println("<h2>Received POST data:</h2>");
