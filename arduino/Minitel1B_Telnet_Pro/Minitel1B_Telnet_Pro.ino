@@ -1039,6 +1039,7 @@ void loopWebsocket() {
       minitel.echo(true);
       minitel.pageMode();
       reset();
+      return; // Important: don't process the key after reset
     }
     debugPrintf("[KB] got code: 0x%X\n", key);
     // prepare data to send over websocket
@@ -1057,15 +1058,21 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
   switch(type) {
     case WStype_DISCONNECTED:
       debugPrintf("[WS] Disconnected!\n");
-/*
       minitel.println();
-      minitel.println("DISCONNECTING...");
-      delay(3000);
+      minitel.println("Disconnected. Press any key to return to menu...");
+      // Wait for user to press a key
+      while (minitel.getKeyCode() == 0) {
+        delay(10);
+      }
       webSocket.disconnect();
       WiFi.disconnect();
       if (!col80 && prestel) teletelMode();
+      modeVideotex();
+      minitel.newXY(1, 1);
+      minitel.newScreen();
+      minitel.echo(true);
+      minitel.pageMode();
       reset();
-*/
       break;
       
     case WStype_CONNECTED:
@@ -1094,6 +1101,21 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
       
     case WStype_ERROR:
       debugPrintf("[WS] WStype_ERROR\n");
+      minitel.println();
+      minitel.println("WebSocket error! Press any key to return to menu...");
+      // Wait for user to press a key
+      while (minitel.getKeyCode() == 0) {
+        delay(10);
+      }
+      webSocket.disconnect();
+      WiFi.disconnect();
+      if (!col80 && prestel) teletelMode();
+      modeVideotex();
+      minitel.newXY(1, 1);
+      minitel.newScreen();
+      minitel.echo(true);
+      minitel.pageMode();
+      reset();
       break;
       
     case WStype_FRAGMENT_TEXT_START:
