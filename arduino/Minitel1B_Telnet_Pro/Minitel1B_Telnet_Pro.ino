@@ -9,9 +9,27 @@
 
 #define MINITEL_BAUD_TRY  4800
 
+#define WIFI_TIMEOUT 10000
+#define WIFI_BEGIN 1
+#define WIFI_WAITING 2
+#define WIFI_ABORTED 3
+#define WIFI_CONNECTED 4
+
+#define HTTP_SERVER_HEADER_MAX_LENGTH 512
+#define HTTP_SERVER_BODY_MAX_LENGTH   4096 // support for 4096 bit RSA private keys
+
+#define HTTP_SERVER_READY            2
+#define HTTP_SERVER_CLIENT_CONNECTED 3
+#define HTTP_SERVER_HEADER_OVERSIZED 4
+#define HTTP_SERVER_BODY_OVERSIZED   5
+#define HTTP_SERVER_BODY_COMPLETE    6
+#define HTTP_SERVER_GET_RECEIVED     7
+#define HTTP_SERVER_UNKNOWN_METHOD   8
+#define HTTP_SERVER_CLOSED           9
+
 #define MINITEL_PORT Serial2
 
-#define DEBUG true
+// #define DEBUG true
 #define DEBUG_PORT Serial
 
 #if DEBUG // Debug enabled
@@ -24,7 +42,6 @@
 #define debugPrint(x)
 #define debugPrintln(x)
 #define debugPrintf(...)
-
 #endif
 
 Minitel minitel(MINITEL_PORT);
@@ -50,10 +67,12 @@ bool echo = false;
 bool col80 = false;
 bool prestel = false;
 bool altcharset = false;
+bool privKey = false;
 int ping_ms = 0;
 String protocol("");
 String sshUser("");
 String sshPass("");
+String sshPrivKey("");
 
 byte connectionType = 0; // 0=Telnet 1=Websocket 2=SSH 3=Serial
 bool ssl = false;
@@ -67,15 +86,21 @@ typedef struct {
   bool col80 = false;
   bool prestel = false;
   bool altcharset = false;
+  bool privKey = false;
   byte connectionType = 0;
   int ping_ms = 0;
   String protocol = "";
   String sshUser = "";
   String sshPass = "";
+  String sshPrivKey = "";
 } Preset;
 
 Preset presets[20];
 int speed;
+uint8_t wifiStatus;
+
+WiFiServer server(80);
+uint8_t serverStatus = HTTP_SERVER_CLOSED;
 
 void initFS() {
   boolean ok = SPIFFS.begin();
@@ -150,7 +175,7 @@ void setup() {
 
     showPrefs();
     setPrefs();
-  
+
     // WiFi connection
     if (connectionType != 3) { // wifi not needed for serial
       
@@ -316,7 +341,7 @@ void loopTelnet() {
     byte tmp = minitel.readByte();
     if (tmp == 18 || (functionKey && tmp == 0x49)) { // CTRL+R = RESET ou TS+CONNEXION
       telnet.stop();
-      WiFi.disconnect();
+      
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
@@ -372,17 +397,31 @@ String inputString(String defaultValue, int& exitCode) {
 }
 
 String inputString(String defaultValue, int& exitCode, char padChar) {
+  return inputString(defaultValue, exitCode, padChar, NULL);
+}
+
+String inputString(String defaultValue, int& exitCode, char padChar, int (*httpHandler)(void)) {
   String out = defaultValue == NULL ? "" : defaultValue;
   minitel.print(out);
   minitel.cursor();
   unsigned long key = minitel.getKeyCode();
   while (!(
            key == 4929 || // Invio
-           key == 13   ||
-           key == 10   ||
+           key == 13   || // CR
+           key == 10   || // LF
            key == 27   || // ESC
-           key == 3       // CTRL+C
+           key == 3    || // CTRL+C
+           key == 4934    // Sommaire
          )) {
+
+    if (httpHandler != NULL) {
+      int handlerExitCode = httpHandler();
+      if (handlerExitCode) {
+        exitCode = 99;
+        return "";
+      }
+    }
+
     if (key != 0) {
       debugPrintf("Key = %u\n", key);
       String str = minitel.getString(key);
@@ -424,7 +463,7 @@ String inputString(String defaultValue, int& exitCode, char padChar) {
     }
     key = minitel.getKeyCode();
   }
-  if (key == 3 || key == 27)
+  if (key == 3 || key == 27 || key == 4934)
     exitCode = 1;
   else
     exitCode = 0;
@@ -458,11 +497,13 @@ void loadPrefs() {
   col80 = prefs.getBool("col80", false);
   prestel = prefs.getBool("prestel", false);
   altcharset = prefs.getBool("altcharset", false);
+  privKey = prefs.getBool("privKey", false);
   connectionType = prefs.getUChar("connectionType", 0);
   ping_ms = prefs.getInt("ping_ms", 0);
   protocol = prefs.getString("protocol", "");
   sshUser = prefs.getString("sshUser", "");
   sshPass = prefs.getString("sshPass", "");
+  sshPrivKey = prefs.getString("sshPrivKey", "");
   prefs.end();
 }
 
@@ -470,18 +511,34 @@ void savePrefs() {
   prefs.begin("telnet-pro", false);
   if (prefs.getString("ssid",     "") != ssid)     prefs.putString("ssid", ssid);
   if (prefs.getString("password", "") != password) prefs.putString("password", password);
-  if (prefs.getString("url",      "") != url)     prefs.putString("url", url);
+  if (prefs.getString("url",      "") != url)      prefs.putString("url", url);
   if (prefs.getBool("scroll",    false) != scroll)     prefs.putBool("scroll", scroll);
   if (prefs.getBool("echo",      false) != echo)       prefs.putBool("echo",   echo);
   if (prefs.getBool("col80",     false) != col80)      prefs.putBool("col80",  col80);
   if (prefs.getBool("prestel",   false) != prestel)    prefs.putBool("prestel", prestel);
   if (prefs.getBool("altcharset",false) != altcharset) prefs.putBool("altcharset", altcharset);
+  if (prefs.getBool("privKey",   false) != privKey)    prefs.putBool("privKey", privKey);
   if (prefs.getUChar("connectionType", 0) != connectionType) prefs.putUChar("connectionType", connectionType);
   if (prefs.getInt("ping_ms", 0) != ping_ms) prefs.putInt("ping_ms", ping_ms);
-  if (prefs.getString("protocol", "") != protocol) prefs.putString("protocol", protocol);
-  if (prefs.getString("sshUser", "")  != sshUser)  prefs.putString("sshUser",  sshUser);
-  if (prefs.getString("sshPass", "")  != sshPass)  prefs.putString("sshPass",  sshPass);
+  if (prefs.getString("protocol", "")   != protocol)    prefs.putString("protocol",   protocol);
+  if (prefs.getString("sshUser", "")    != sshUser)     prefs.putString("sshUser",    sshUser);
+  if (prefs.getString("sshPass", "")    != sshPass)     prefs.putString("sshPass",    sshPass);
+  if (prefs.getString("sshPrivKey", "") != sshPrivKey)  prefs.putString("sshPrivKey", sshPrivKey);
   prefs.end();
+}
+
+void showWifiStatus() {
+  String message;
+  switch (wifiStatus) {
+    case WIFI_WAITING:   message = "CONNECT"; break;
+    case WIFI_CONNECTED: message = WiFi.localIP().toString(); break;
+    default:             message = "NO SIGNAL"; break;
+  }
+  minitel.newXY(21,3); minitel.attributs(CARACTERE_ROUGE);
+  if (wifiStatus == WIFI_WAITING) minitel.attributs(CLIGNOTEMENT);
+  //else minitel.attributs(FIXE);
+  for (int k=0; k<20-message.length(); k++) minitel.printChar(' ');
+  minitel.print(message);
 }
 
 void showPrefs() {
@@ -495,6 +552,7 @@ void showPrefs() {
   minitel.textMode();
   minitel.attributs(DOUBLE_HAUTEUR); minitel.attributs(CARACTERE_JAUNE); minitel.attributs(INVERSION_FOND); minitel.print("  Minitel Telnet Pro  ");
   minitel.newXY(34,2); minitel.attributs(CARACTERE_ROUGE); minitel.print(String(speed)); minitel.print("bps");
+  showWifiStatus();
   minitel.newXY(1,4);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("1"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSID: "); minitel.attributs(CARACTERE_CYAN); printStringValue(ssid); clearLineFromCursor(); minitel.println();
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("2"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Pass: "); minitel.attributs(CARACTERE_CYAN); printPassword(password); clearLineFromCursor(); minitel.println();
@@ -517,7 +575,13 @@ void showPrefs() {
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("9"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("Subprot.: "); minitel.attributs(CARACTERE_CYAN); minitel.print(protocol); clearLineFromCursor(); minitel.println();
   //minitel.newXY(1,16);
   minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("U"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH User: "); minitel.attributs(CARACTERE_CYAN); minitel.print(sshUser); clearLineFromCursor(); minitel.println();
-  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("P"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH Pass: "); minitel.attributs(CARACTERE_CYAN); if (sshPass != NULL && sshPass != "") {printPassword(sshPass);} clearLineFromCursor(); minitel.println();
+  minitel.attributs(CARACTERE_BLANC); minitel.graphicMode(); minitel.writeByte(0x6A); minitel.textMode(); minitel.attributs(INVERSION_FOND); minitel.print("P"); minitel.attributs(FOND_NORMAL); minitel.graphicMode(); minitel.writeByte(0x35); minitel.textMode(); minitel.print("SSH Pass: "); minitel.attributs(CARACTERE_CYAN);
+  if (privKey) {
+    minitel.print("-- privKey --");
+  } else {
+    if (sshPass != NULL && sshPass != "") {printPassword(sshPass);} 
+  }
+  clearLineFromCursor(); minitel.println();
 
   minitel.newXY(1,18); minitel.writeByte(0x5F); minitel.repeat(3);
   minitel.newXY(1,19); minitel.print("{  }"); minitel.newXY(1,20); minitel.print("{  }");
@@ -563,11 +627,39 @@ void printStringValue(String s) {
   }
 }
 
-
 int setPrefs() {
   unsigned long key = minitel.getKeyCode();
+  unsigned long startMs;
+  wifiStatus = WIFI_BEGIN;
   bool valid = false;
+  int code = 0;
+
   while (key != 32) {
+
+    if (wifiStatus == WIFI_BEGIN) {
+      wifiStatus = WIFI_WAITING;
+      debugPrintln("Connecting to WiFi");
+      showWifiStatus();
+      WiFi.disconnect();
+      WiFi.begin(ssid.c_str(), password.c_str());
+      startMs = millis();
+    }
+
+    if (wifiStatus == WIFI_WAITING) {
+      if (WiFi.status() == WL_CONNECTED) {
+        wifiStatus = WIFI_CONNECTED;
+        debugPrintln(" DONE");
+        showWifiStatus();
+      } else if (millis() - startMs > WIFI_TIMEOUT) {
+        wifiStatus = WIFI_ABORTED;
+        debugPrintln(" FAILED");
+        showWifiStatus();
+      } else {
+        delay(200);
+        debugPrint('%');
+      }
+    }
+
     valid = false;
     if (key != 0) {
       valid = true;
@@ -581,16 +673,16 @@ int setPrefs() {
         minitel.pageMode();
         reset();
       } else if (key == '1') {
-        setParameter(10, 4, ssid, false, false);
+        if (setParameter(10, 4, ssid, false, false) == 0) wifiStatus = WIFI_BEGIN;
       } else if (key == '2') {
-        setParameter(10, 5, password, true, false);
+        if (setParameter(10, 5, password, true, false) == 0) wifiStatus = WIFI_BEGIN;
         if (password.length() <= 31) {
-          minitel.newXY(1,6);
+          minitel.newXY(1, 6);
           clearLineFromCursor();
         }
       } else if (key == '3') {
         setParameter(9, 7, url, false, false);
-        if (url.length() <= 40-9) {
+        if (url.length() <= 40 - 9) {
           minitel.newXY(1, 8);
           clearLineFromCursor();
         }
@@ -605,7 +697,7 @@ int setPrefs() {
       } else if (key == 'c' || key == 'C') {
         switchParameter(37, 9, prestel);
       } else if (key == '7') {
-        cycleConnectionType(14,13);
+        cycleConnectionType(14, 13);
       } else if (key == '8') {
         uint16_t temp = ping_ms;
         setIntParameter(14, 14, temp);
@@ -615,7 +707,28 @@ int setPrefs() {
       } else if (key == 'u' || key == 'U') {
         setParameter(14, 16, sshUser, false, true);
       } else if (key == 'p' || key == 'P') {
-        setParameter(14, 17, sshPass, true, true);
+        if (serverStatus == HTTP_SERVER_CLOSED && WiFi.status() == WL_CONNECTED) {
+          debugPrintln("Server begin");
+          server.begin();
+          serverStatus = HTTP_SERVER_READY;
+        }
+
+        int inputExitCode = setParameter(14, 17, sshPass, true, true, manageHttpConnection);
+        if (inputExitCode == 0) {
+          privKey = false;
+          sshPrivKey = "";
+        }
+
+        if (inputExitCode == 1 && privKey) {
+          minitel.newXY(14,17);
+          minitel.attributs(CARACTERE_CYAN);
+          minitel.print("-- privKey --"); 
+          clearLineFromCursor(); minitel.println();
+        }
+
+        debugPrintln("Server end");
+        serverStatus = HTTP_SERVER_CLOSED;
+        server.end();
       } else if (key == 's' || key == 'S') {
         savePresets();
       } else if (key == 'l' || key == 'L') {
@@ -631,7 +744,11 @@ int setPrefs() {
     }
     key = minitel.getKeyCode();
   }
-  minitel.newXY(1, 0); minitel.cancel();
+  //server.end();
+  debugPrintln("Server end");
+  serverStatus = HTTP_SERVER_CLOSED;
+  minitel.newXY(1, 0);
+  minitel.cancel();
   minitel.newScreen();
   return 0;
 }
@@ -667,11 +784,13 @@ void savePresets() {
       presets[slot].col80 = col80;
       presets[slot].prestel = prestel;
       presets[slot].altcharset = altcharset;
+      presets[slot].privKey = privKey;
       presets[slot].connectionType = connectionType;
       presets[slot].ping_ms = ping_ms;
       presets[slot].protocol = protocol;
       presets[slot].sshUser = sshUser;
       presets[slot].sshPass = sshPass;
+      presets[slot].sshPrivKey = sshPrivKey;
       writePresets();
     }
   } while (true);
@@ -706,11 +825,13 @@ void loadPresets() {
       col80 = presets[slot].col80;
       prestel = presets[slot].prestel;
       altcharset = presets[slot].altcharset;
+      privKey = presets[slot].privKey;
       connectionType = presets[slot].connectionType;
       ping_ms = presets[slot].ping_ms;
       protocol = presets[slot].protocol;
       sshUser = presets[slot].sshUser;
       sshPass = presets[slot].sshPass;
+      sshPrivKey = presets[slot].sshPrivKey;
 
       minitel.attributs(CARACTERE_CYAN); minitel.attributs(FOND_NORMAL);
       minitel.newXY(3, 4+slot); minitel.print(presets[slot].presetName);
@@ -747,6 +868,10 @@ void switchParameter(int x, int y, bool &destination) {
 }
 
 int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) {
+  return setParameter(x, y, destination, mask, allowBlank, NULL);
+}
+
+int setParameter(int x, int y, String &destination, bool mask, bool allowBlank, int (*httpHandler)(void)) {
   minitel.newXY(x, y); minitel.attributs(CARACTERE_BLANC);
   minitel.print(destination);
   int len = 41 - x - numberOfChars(destination);
@@ -755,7 +880,7 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
   for (int i = 0; i < len; ++i) minitel.print(".");
   minitel.newXY(x, y);
   int exitCode = 0;
-  String temp = inputString(destination, exitCode, '.');
+  String temp = inputString(destination, exitCode, '.', httpHandler);
   if (!exitCode) {
     if (allowBlank) {
       destination = String(temp);
@@ -763,9 +888,13 @@ int setParameter(int x, int y, String &destination, bool mask, bool allowBlank) 
       destination = String(temp);
     }
   }
+  if (exitCode == 99) return exitCode;
+  
   minitel.newXY(x, y); minitel.attributs(CARACTERE_CYAN);
   if (destination == "") {
     if (!allowBlank) minitel.print("-undefined-");
+  } else if (httpHandler && exitCode == 1 && privKey) {
+    // do nothing
   } else {
     if (mask) {
       minitel.graphicMode();
@@ -916,7 +1045,7 @@ void sshTask(void *pvParameters) {
   
   // Open ssh session
   debugPrintf("  Connecting to %s as %s\n", host.c_str(), sshUser.c_str());
-  bool isOpen = sshClient.begin(host.c_str(), sshUser.c_str(), sshPass.c_str());
+  bool isOpen = sshClient.begin(host.c_str(), port, sshUser.c_str(), sshPass.c_str(), privKey, sshPrivKey.c_str());
   if (!isOpen) debugPrintf("  > SSH authentication failed\n");
   
   // Loop task
@@ -1011,7 +1140,7 @@ void sshTask(void *pvParameters) {
 
   // Reinit minitel and Self delete ssh task 
   debugPrintf("\n> SSH task end\n");
-  WiFi.disconnect();
+
   modeVideotex();
   minitel.newXY(1, 1);
   minitel.newScreen();
@@ -1031,7 +1160,6 @@ void loopWebsocket() {
   if (key != 0) {
     if (key == 18 || key == 4937) { // CTRL+R = RESET ou TS+CONNEXION
       webSocket.disconnect();
-      WiFi.disconnect();
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
@@ -1065,7 +1193,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t len) {
         delay(10);
       }
       webSocket.disconnect();
-      WiFi.disconnect();
+      // WiFi.disconnect();
       if (!col80 && prestel) teletelMode();
       modeVideotex();
       minitel.newXY(1, 1);
@@ -1149,11 +1277,13 @@ void writePresets() {
     doc["col80"] = presets[i].col80;
     doc["prestel"] = presets[i].prestel;
     doc["altcharset"] = presets[i].altcharset;
+    doc["privKey"] = presets[i].privKey;
     doc["connectionType"] = presets[i].connectionType;
     doc["ping_ms"] = presets[i].ping_ms;
     doc["protocol"] = presets[i].protocol;
     doc["sshUser"] = presets[i].sshUser;
     doc["sshPass"] = presets[i].sshPass;
+    doc["sshPrivKey"] = presets[i].sshPrivKey;
 
     if (serializeJson(doc, file) == 0) {
       debugPrintln(F("Failed to write to file"));
@@ -1178,11 +1308,13 @@ void readPresets() {
       presets[i].col80 = false;
       presets[i].prestel = false;
       presets[i].altcharset = false;
+      presets[i].privKey = false;
       presets[i].connectionType = 0;
       presets[i].ping_ms = 0;
       presets[i].protocol = "";
       presets[i].sshUser = "";
       presets[i].sshPass = "";
+      presets[i].sshPrivKey = "";
     } else {
       String _presetName = doc["presetName"]; presets[i].presetName = _presetName == "null" ? "" : _presetName;
       String _url = doc["url"]; presets[i].url = _url == "null" ? "" : _url;
@@ -1191,11 +1323,13 @@ void readPresets() {
       bool _col80 = doc["col80"]; presets[i].col80 = _col80;
       bool _prestel = doc["prestel"]; presets[i].prestel = _prestel;
       bool _altcharset = doc["altcharset"]; presets[i].altcharset = _altcharset;
+      bool _privKey = doc["privKey"]; presets[i].privKey = _privKey;
       byte _connectionType = doc["connectionType"]; presets[i].connectionType = _connectionType;
       int _ping_ms = doc["ping_ms"]; presets[i].ping_ms = _ping_ms;
-      String _protocol = doc["protocol"]; presets[i].protocol = _protocol == "null" ? "" : _protocol;
-      String _sshUser  = doc["sshUser"];  presets[i].sshUser  = _sshUser  == "null" ? "" : _sshUser;
-      String _sshPass  = doc["sshPass"];  presets[i].sshPass  = _sshPass  == "null" ? "" : _sshPass;
+      String _protocol   = doc["protocol"];   presets[i].protocol   = _protocol   == "null" ? "" : _protocol;
+      String _sshUser    = doc["sshUser"];    presets[i].sshUser    = _sshUser    == "null" ? "" : _sshUser;
+      String _sshPass    = doc["sshPass"];    presets[i].sshPass    = _sshPass    == "null" ? "" : _sshPass;
+      String _sshPrivKey = doc["sshPrivKey"]; presets[i].sshPrivKey = _sshPrivKey == "null" ? "" : _sshPrivKey;
 
       ++countNonEmptySlots;
     }
@@ -1212,11 +1346,13 @@ void readPresets() {
     presets[0].col80 = false;
     presets[0].prestel = false;
     presets[0].altcharset = false;
+    presets[0].privKey = false;
     presets[0].connectionType = 0; // Telnet
     presets[0].ping_ms = 0;
     presets[0].protocol = "";
     presets[0].sshUser = "";
     presets[0].sshPass = "";
+    presets[0].sshPrivKey = "";
 
     presets[1].presetName = "3614 HACKER";
     presets[1].url = "ws:mntl.joher.com:2018/?echo";
@@ -1225,11 +1361,13 @@ void readPresets() {
     presets[1].col80 = false;
     presets[1].prestel = false;
     presets[1].altcharset = false;
+    presets[1].privKey = false;
     presets[1].connectionType = 1; // Websocket
     presets[1].ping_ms = 0;
     presets[1].protocol = "";
     presets[1].sshUser = "";
     presets[1].sshPass = "";
+    presets[1].sshPrivKey = "";
 
     presets[2].presetName = "3614 TEASER";
     presets[2].url = "ws:minitel.3614teaser.fr:8080/ws";
@@ -1238,11 +1376,13 @@ void readPresets() {
     presets[2].col80 = false;
     presets[2].prestel = false;
     presets[2].altcharset = false;
+    presets[2].privKey = false;
     presets[2].connectionType = 1; // Websocket
     presets[2].ping_ms = 10000;
     presets[2].protocol = "tty";
     presets[2].sshUser = "";
     presets[2].sshPass = "";
+    presets[2].sshPrivKey = "";
 
     presets[3].presetName = "3615 SM";
     presets[3].url = "wss:wss.3615.live:9991/?echo";
@@ -1251,11 +1391,13 @@ void readPresets() {
     presets[3].col80 = false;
     presets[3].prestel = false;
     presets[3].altcharset = false;
+    presets[3].privKey = false;
     presets[3].connectionType = 1; // Websocket
     presets[3].ping_ms = 0;
     presets[3].protocol = "";
     presets[3].sshUser = "";
     presets[3].sshPass = "";
+    presets[3].sshPrivKey = "";
 
     presets[4].presetName = "3611.re";
     presets[4].url = "ws:3611.re/ws";
@@ -1264,11 +1406,13 @@ void readPresets() {
     presets[4].col80 = false;
     presets[4].prestel = false;
     presets[4].altcharset = false;
+    presets[4].privKey = false;
     presets[4].connectionType = 1; // Websocket
     presets[4].ping_ms = 0;
     presets[4].protocol = "";
     presets[4].sshUser = "";
     presets[4].sshPass = "";
+    presets[4].sshPrivKey = "";
 
     presets[5].presetName = "3615co.de";
     presets[5].url = "ws:3615co.de/ws";
@@ -1277,11 +1421,13 @@ void readPresets() {
     presets[5].col80 = false;
     presets[5].prestel = false;
     presets[5].altcharset = false;
+    presets[5].privKey = false;
     presets[5].connectionType = 1; // Websocket
     presets[5].ping_ms = 0;
     presets[5].protocol = "";
     presets[5].sshUser = "";
     presets[5].sshPass = "";
+    presets[5].sshPrivKey = "";
 
     presets[6].presetName = "miniPAVI";
     presets[6].url = "ws://go.minipavi.fr:8182";
@@ -1290,11 +1436,13 @@ void readPresets() {
     presets[6].col80 = false;
     presets[6].prestel = false;
     presets[6].altcharset = false;
+    presets[6].privKey = false;
     presets[6].connectionType = 1; // ws
     presets[6].ping_ms = 0;
     presets[6].protocol = "";
     presets[6].sshUser = "";
     presets[6].sshPass = "";
+    presets[6].sshPrivKey = "";
 
     presets[7].presetName = "TELSTAR by GlassTTY";
     presets[7].url = "glasstty.com:6502";
@@ -1303,11 +1451,13 @@ void readPresets() {
     presets[7].col80 = false;
     presets[7].prestel = true;
     presets[7].altcharset = true;
+    presets[7].privKey = true;
     presets[7].connectionType = 0; // Telnet
     presets[7].ping_ms = 0;
     presets[7].protocol = "";
     presets[7].sshUser = "";
     presets[7].sshPass = "";
+    presets[7].sshPrivKey = "";
 
     presets[8].presetName = "ssh example";
     presets[8].url = "[host name or ip]";
@@ -1316,11 +1466,13 @@ void readPresets() {
     presets[8].col80 = true;
     presets[8].prestel = false;
     presets[8].altcharset = false;
+    presets[8].privKey = false;
     presets[8].connectionType = 2; // SSH
     presets[8].ping_ms = 0;
     presets[8].protocol = "";
     presets[8].sshUser = "pi";
     presets[8].sshPass = "raspberry";
+    presets[8].sshPrivKey = "";
 
     writePresets();
   }
@@ -1405,4 +1557,90 @@ void showHelp() {
   } while (true);
 
   showPrefs();
+}
+
+int manageHttpConnection() {
+  String header = "";
+  String postBody = "";
+
+  if (serverStatus != HTTP_SERVER_READY) return 0;
+
+  WiFiClient client = server.available();
+  if (!client) return 0;
+
+  serverStatus = HTTP_SERVER_CLIENT_CONNECTED;
+  debugPrintln("New Client.");
+  String currentLine = "";
+  int contentLength = -1;
+  while (client.connected()) {
+    if (serverStatus != HTTP_SERVER_CLIENT_CONNECTED) break;
+    if (client.available()) {
+      char c = client.read();
+      header += c;
+      if (header.length() > HTTP_SERVER_HEADER_MAX_LENGTH-1) {
+        debugPrintln("header too big");
+        serverStatus = HTTP_SERVER_HEADER_OVERSIZED;
+      }
+
+      if (c == '\n') {
+        if (currentLine.startsWith("Content-Length:")) {
+          contentLength = currentLine.substring(16).toInt();
+        }
+        if (contentLength > HTTP_SERVER_BODY_MAX_LENGTH) {
+          debugPrintln("body too big");
+          serverStatus = HTTP_SERVER_BODY_OVERSIZED;
+        }
+        if (currentLine.length() == 0) {
+          if (header.indexOf("POST") >= 0) {
+            // Inizia a leggere il corpo del POST
+            while (postBody.length() < contentLength) {
+              if (client.available()) {
+                char c = client.read();
+                postBody += c;
+              }
+            }
+            serverStatus = HTTP_SERVER_BODY_COMPLETE;
+          } else if (header.indexOf("GET") >= 0) {
+            serverStatus = HTTP_SERVER_GET_RECEIVED;
+            } else {
+              serverStatus = HTTP_SERVER_UNKNOWN_METHOD;
+            }
+        } else {
+          currentLine = "";
+        }
+      } else if (c != '\r') {
+        currentLine += c;
+      }
+    }
+  }
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type: text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println("<!DOCTYPE HTML><html>");
+  client.println("<head><title>ESP32 Web Server</title></head><body>");
+  if (serverStatus == HTTP_SERVER_HEADER_OVERSIZED) {
+    client.println("<h2>Header is too big (" + String(HTTP_SERVER_HEADER_MAX_LENGTH) + " bytes max)</h2>");
+  }
+  if (serverStatus == HTTP_SERVER_BODY_OVERSIZED) {
+    client.println("<h2>Body is too big (" + String(HTTP_SERVER_BODY_MAX_LENGTH) + " bytes max)</h2>");
+  }
+  if (serverStatus == HTTP_SERVER_BODY_COMPLETE) {
+    client.println("<h2>Received POST data:</h2>");
+    client.println("<pre>");
+    client.println("Private Key Injected");
+    client.println("</pre>");
+    privKey = true;
+    sshPrivKey = postBody;
+    showPrefs();
+  } else if (serverStatus == HTTP_SERVER_GET_RECEIVED) {
+    client.println("<h2>GET request received</h2>");
+  }
+  client.println("</body></html>");
+  client.println();
+
+  client.stop();
+  debugPrintln("Client disconnected.");
+  debugPrintln("");
+  return (serverStatus == HTTP_SERVER_BODY_COMPLETE);
 }
